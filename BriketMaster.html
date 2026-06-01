@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>БРИКЕТ МАСТЕР 3.9.9</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --accent: #38bdf8;
+            --accent2: #22d3ee;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #334155;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --money: #fbbf24;
+            --money2: #f59e0b;
+            --chart-mat: #38bdf8;
+            --chart-fot: #4ade80;
+            --chart-ovh: #fbbf24;
+            --chart-vat: #ef4444;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 75px 20px 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .app-layout {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1600px;
+            align-items: stretch;
+        }
+        .tech-column {
+            flex: 0 0 68%;
+            min-width: 0;
+        }
+        .eco-column {
+            flex: 0 0 calc(32% - 20px);
+            min-width: 0;
+        }
+        .container-box {
+            background: var(--panel);
+            padding: 22px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .header i.fa-layer-group {
+            font-size: 1.6em;
+            color: var(--accent);
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.3em;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--accent);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .header .subtitle {
+            color: var(--text-dim);
+            font-size: 0.72em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-left: auto;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .shift-param {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: #e2e8f0;
+            padding: 5px 8px;
+            border-radius: 7px;
+            font-weight: 600;
+            font-size: 0.7em;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            transition: all 0.2s;
+            min-width: 0;
+        }
+        .shift-param:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+        }
+        .shift-param.date-input {
+            width: 115px;
+            color-scheme: dark;
+        }
+        .shift-param.num-input {
+            width: 65px;
+        }
+        .shift-param.qty-input {
+            width: 65px;
+            border-color: var(--money);
+            color: var(--money);
+            font-weight: 800;
+            font-size: 0.75em;
+        }
+        .shift-label {
+            font-size: 0.6em;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+        .btn {
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            font-weight: 800;
+            font-size: 0.7em;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 7px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn:hover {
+            background: #7dd3fc;
+            transform: translateY(-1px);
+        }
+        .btn i {
+            font-size: 1em;
+            color: inherit;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .card {
+            background: rgba(15, 23, 42, 0.4);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .control {
+            margin-bottom: 12px;
+        }
+        .control:last-child {
+            margin-bottom: 0;
+        }
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .label-row label {
+            font-size: 0.72em;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .val-input {
+            width: 80px;
+            background: #0f172a;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 4px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1em;
+        }
+        .val-input.wide {
+            width: 95px;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        select,
+        .full-input {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .press-status {
+            border: 1px solid var(--success);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            color: var(--success);
+            font-weight: 900;
+            font-size: 1.1em;
+            background: rgba(74, 222, 128, 0.05);
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .res-box {
+            background: #111827;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--border);
+            min-height: 95px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .res-box.orange {
+            border-top-color: var(--money);
+        }
+        .res-box.blue {
+            border-top-color: var(--accent);
+        }
+        .res-box.green {
+            border-top-color: var(--success);
+        }
+        .res-label {
+            display: block;
+            font-size: 0.65em;
+            font-weight: 800;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .res-val {
+            font-size: 1.4em;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .res-unit {
+            font-size: 0.65em;
+            color: var(--text-dim);
+            margin-left: 3px;
+            font-weight: 600;
+        }
+        .res-sub-val {
+            font-size: 0.75em;
+            color: var(--accent);
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .glue-detail {
+            font-size: 0.65em;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+        .glue-detail span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .area-highlight {
+            font-size: 1.1em;
+            color: var(--success);
+            font-weight: 800;
+        }
+        .eco-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--money);
+            font-size: 0.85em;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .eco-group-title {
+            font-size: 0.65em;
+            font-weight: 800;
+            color: var(--money);
+            text-transform: uppercase;
+            margin: 10px 0 6px 0;
+            display: block;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+            padding-bottom: 3px;
+        }
+        .eco-field {
+            margin-bottom: 6px;
+        }
+        .eco-field label {
+            display: block;
+            font-size: 0.7em;
+            color: var(--text-dim);
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+        .eco-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 6px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .eco-input.vat-wide {
+            width: 55px;
+            text-align: center;
+            font-weight: 800;
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 18px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked+.slider {
+            background-color: var(--money);
+        }
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+        .chart-container {
+            display: flex;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+            background: #0f172a;
+        }
+        .chart-part {
+            height: 100%;
+            transition: 0.5s;
+        }
+        .chart-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6em;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            flex-wrap: wrap;
+            gap: 2px 8px;
+        }
+        .chart-legend span {
+            white-space: nowrap;
+        }
+        .finance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.45fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .finance-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 10px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+            position: relative;
+        }
+        .finance-card .title {
+            font-size: 0.6em;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .finance-card .value {
+            font-size: 1.4em;
+            font-weight: 900;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        .finance-card .sub {
+            font-size: 0.6em;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+        .finance-card.blue .value {
+            color: var(--accent);
+        }
+        .finance-card.gold .value {
+            color: var(--money);
+        }
+        .finance-card.green .value {
+            color: var(--success);
+        }
+        .finance-card.green {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--success);
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.15);
+        }
+        .finance-card.green:hover {
+            background: rgba(74, 222, 128, 0.08);
+            box-shadow: 0 0 16px rgba(74, 222, 128, 0.3);
+            transform: translateY(-1px);
+        }
+        .profit-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75em;
+            font-weight: 800;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.5));
+            border-radius: 12px;
+            margin-bottom: 8px;
+            min-height: 38px;
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+            gap: 8px;
+        }
+        .profit-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            transition: background 0.4s;
+        }
+        .profit-row.profitable::before {
+            background: var(--success);
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+        }
+        .profit-row.unprofitable::before {
+            background: var(--danger);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        }
+        .profit-row span:first-child {
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .profit-row span:last-child {
+            font-size: 1.1em;
+            font-weight: 900;
+            letter-spacing: 0.3px;
+            text-align: right;
+        }
+        #warning {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 8px;
+            border-radius: 10px;
+            display: none;
+            border: 1px solid var(--danger);
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+        .ana-pct {
+            width: 60px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+        .ana-pct.mat {
+            color: var(--chart-mat);
+        }
+        .ana-pct.fot {
+            color: var(--chart-fot);
+        }
+        .ana-pct.ovh {
+            color: var(--chart-ovh);
+        }
+        .ana-pct.vat {
+            color: var(--chart-vat);
+        }
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--panel);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        .modal-content h2 {
+            margin: 0 0 16px 0;
+            color: var(--accent);
+            font-size: 1.2em;
+        }
+        .modal-content input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .history-item {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .history-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent);
+        }
+        .history-item .info {
+            flex: 1;
+            font-size: 0.9em;
+        }
+        .history-item .delete-btn {
+            background: var(--danger);
+            padding: 4px 12px;
+            font-size: 0.65em;
+            border-radius: 20px;
+            margin-left: 12px;
+            cursor: pointer;
+            z-index: 5;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container-box {
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <div class="tech-column">
+            <div class="container-box">
+                <div class="header">
+                    <div class="header-left">
+                        <i class="fas fa-layer-group"></i>
+                        <div>
+                            <h1>БРИКЕТ МАСТЕР</h1>
+                            <div class="subtitle">Учет материалов и расчет выхода готовой продукции</div>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <span class="shift-label">Дата</span>
+                        <input type="date" id="shiftDate" class="shift-param date-input" title="Дата сменного задания">
+                        <span class="shift-label">№</span>
+                        <input type="number" id="shiftNumber" class="shift-param num-input" placeholder="101" title="Номер задания" step="1">
+                        <span class="shift-label">Кол-во</span>
+                        <input type="number" id="briquetQty" class="shift-param qty-input" value="1" min="1" max="99" title="Количество брикетов" oninput="calculate()">
+                        <button class="btn" onclick="printShiftTask()"><i class="fas fa-print"></i> Сменное задание</button>
+                    </div>
+                </div>
+                <div id="warning">⚠️ ДЛИНА БРИКЕТА ПРЕВЫШАЕТ 2000 ММ!</div>
+                <div class="input-grid">
+                    <div class="card">
+                        <div class="control">
+                            <div class="label-row"><label><i class="fas fa-arrows-alt-h"></i> Длина панели (L), мм</label><input type="number" id="lenInput" value="3500" class="val-input"></div>
+                            <input type="range" id="lenRange" min="1500" max="6500" step="50" value="3500">
+                        </div>
+                        <div class="control">
+                            <div class="label-row"><label><i class="fas fa-arrows-alt-v"></i> Ширина панели (B), мм</label><input type="number" id="widInput" value="1330" class="val-input"></div>
+                            <input type="range" id="widRange" min="500" max="1330" step="10" value="1330">
+                        </div>
+                        <div class="control" style="margin-bottom:0">
+                            <div class="label-row"><label><em class="fas fa-percent"></em> Запас фольги на брак (%)</label><input type="number" id="defectInput" value="10" class="val-input"></div>
+                            <input type="range" id="defectRange" min="0" max="50" step="1" value="10">
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                            <div><label class="res-label">Фольга, мм</label><select id="foilT"><option value="0.04">0.04</option><option value="0.045">0.045</option><option value="0.05" selected>0.05</option></select></div>
+                            <div><label class="res-label">Ячейка, мм</label><select id="cell">
+                                <option value="6.3" selected>6.3 (полоса 3.5)</option>
+                                <option value="9.52">9.52 (5.3)</option>
+                                <option value="12.3">12.3 (6.8)</option>
+                            </select></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                            <div><label class="res-label">Давление на брикет (кг/см²)</label><input type="number" id="targetP" value="10" class="full-input"></div>
+                            <div><label class="res-label">Давление пресса</label><div class="press-status" id="resBar">40 Бар</div></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="control"><div class="label-row"><label>Запас на растяжку (листов)</label><input type="number" id="marginInput" value="20" class="val-input" style="width:50px"></div><input type="range" id="marginRange" min="10" max="50" step="1" value="20"></div>
+                            <div class="control"><div class="label-row"><label>Ширина полосы (мм)</label><input type="number" id="stripInput" value="20.0" step="0.1" class="val-input wide"></div><input type="range" id="stripRange" min="5" max="40" step="0.1" value="20"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="results-grid">
+                    <div class="res-box orange"><span class="res-label">Количество листов</span><span class="res-val" id="resN">0</span><span class="res-unit">шт</span></div>
+                    <div class="res-box orange"><span class="res-label">Длина брикета</span><span class="res-val" id="resBL">0</span><span class="res-unit">мм</span></div>
+                    <div class="res-box green"><span class="res-label">Толщина брикета (теор.)</span><span class="res-val" id="resThick">0</span><span class="res-unit">мм</span></div>
+                    <div class="res-box green"><span class="res-label">Выход продукции</span><span class="res-val" id="resStrips">0</span><span class="res-unit">полос</span><div class="res-sub-val"><em class="fas fa-calculator"></em> <span id="resTotalArea" class="area-highlight">0</span> <span class="area-highlight">м²</span></div></div>
+                    <div class="res-box blue"><span class="res-label">Фольга (чистая)</span><span class="res-val" id="resFoilMass">0</span><span class="res-unit">кг</span><div class="res-sub-val" style="color:var(--text-dim)">Общая: <span id="resFoilTotal" style="color:var(--text)">0</span> кг</div></div>
+                    <div class="res-box blue"><span class="res-label">Брак фольги</span><span class="res-val" id="resDefectKg">0</span><span class="res-unit">кг</span></div>
+                    <div class="res-box blue">
+                        <span class="res-label">Клей (приготовить)</span>
+                        <div class="res-sub-val" style="color:var(--accent)">Всего: <span id="resGlueTotal">0</span> кг</div>
+                        <div class="glue-detail">Клей А: <span id="resGlueA">0</span> кг</div>
+                        <div class="glue-detail">Этилацетат: <span id="resSolvent">0</span> кг</div>
+                    </div>
+                    <div class="res-box blue"><span class="res-label">Масса брикета</span><span class="res-val" id="resMass">0</span><span class="res-unit">кг</span></div>
+                </div>
+                <div class="history-actions">
+                    <button class="btn" onclick="openSaveModal()"><i class="fas fa-save"></i> Сохранить расчёт</button>
+                    <button class="btn" onclick="showHistory()"><i class="fas fa-history"></i> История</button>
+                    <button class="btn" onclick="exportJSON()"><i class="fas fa-file-export"></i> Экспорт JSON</button>
+                    <button class="btn" onclick="document.getElementById('importFileInput').click()"><i class="fas fa-file-import"></i> Импорт JSON</button>
+                    <button class="btn" onclick="resetAll()" style="background: var(--danger);"><i class="fas fa-undo-alt"></i> Сброс</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importJSON(event)">
+                </div>
+            </div>
+        </div>
+        <div class="eco-column">
+            <div class="container-box" style="border-color: var(--money);">
+                <div class="eco-header"><em class="fas fa-coins"></em> Экономика и Аналитика</div>
+                <span class="eco-group-title">Закупка и Лом (руб/кг)</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+                    <div class="eco-field"><label>Фольга</label><input type="number" id="p_foil" value="467.5" class="eco-input"></div>
+                    <div class="eco-field"><label>Цена лома</label><input type="number" id="p_scrap" value="85" class="eco-input"></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+                    <div class="eco-field"><label>Клей А</label><input type="number" id="p_glue" value="6262" class="eco-input"></div>
+                    <div class="eco-field"><label>Этилацетат</label><input type="number" id="p_solv" value="150.5" class="eco-input"></div>
+                </div>
+                <span class="eco-group-title">Накладные и План</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                    <div class="eco-field"><label>Людей в смене</label><input type="number" id="f_ppl" value="3" class="eco-input"></div>
+                    <div class="eco-field"><label>З/П (за смену)</label><input type="number" id="f_sal" value="3643" class="eco-input"></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                    <div class="eco-field"><label>План (брикетов в смену)</label><input type="number" id="f_plan" value="2" class="eco-input"></div>
+                    <div class="eco-field"><label>Накладные расходы (%)</label><input type="number" id="p_ovh" value="30" class="eco-input"></div>
+                </div>
+                <span class="eco-group-title">Анализ затрат на брикет</span>
+                <div style="background: rgba(15,23,42,0.4); padding: 8px; border-radius: 8px;">
+                    <div class="eco-field" style="display:flex; justify-content:space-between; font-size:0.8em; font-weight:700; margin-bottom:4px; align-items:center;"><span style="color:var(--text-dim)">Сумма материалов:</span><span style="flex:1; text-align:right; margin-right:10px" id="anaMat">0 ₽</span><span class="ana-pct mat" id="anaMatPct">0%</span></div>
+                    <div class="eco-field" style="display:flex; justify-content:space-between; font-size:0.8em; font-weight:700; margin-bottom:4px; align-items:center;"><span style="color:var(--text-dim)">Общий ФОТ:</span><span style="flex:1; text-align:right; margin-right:10px" id="anaFot">0 ₽</span><span class="ana-pct fot" id="anaFotPct">0%</span></div>
+                    <div class="eco-field" style="display:flex; justify-content:space-between; font-size:0.8em; font-weight:700; margin-bottom:4px; align-items:center;"><span style="color:var(--text-dim)">Накладные расходы:</span><span style="flex:1; text-align:right; margin-right:10px" id="anaOvh">0 ₽</span><span class="ana-pct ovh" id="anaOvhPct">0%</span></div>
+                    <div class="eco-field" style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; font-weight:700; margin-bottom:4px;">
+                        <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--text-dim)">НДС:</span><input type="number" id="vatVal" value="22" class="eco-input vat-wide"><span style="font-size:0.9em;">%</span><label class="switch"><input type="checkbox" id="useVAT"><span class="slider"></span></label></div>
+                        <span style="flex:1; text-align:right; margin-right:10px" id="anaVat">0 ₽</span><span class="ana-pct vat" id="anaVatPct">0%</span>
+                    </div>
+                </div>
+                <span class="eco-group-title">Структура себестоимости</span>
+                <div class="chart-container">
+                    <div id="c_mat" class="chart-part" style="background:var(--chart-mat); width: 60%"></div>
+                    <div id="c_fot" class="chart-part" style="background:var(--chart-fot); width: 20%"></div>
+                    <div id="c_ovh" class="chart-part" style="background:var(--chart-ovh); width: 20%"></div>
+                    <div id="c_vat" class="chart-part" style="background:var(--chart-vat); width: 0%"></div>
+                </div>
+                <div class="chart-legend"><span style="color:var(--chart-mat)">■ Материалы</span><span style="color:var(--chart-fot)">■ ФОТ</span><span style="color:var(--chart-ovh)">■ Накладные</span><span style="color:var(--chart-vat)">■ НДС</span></div>
+                <div class="finance-grid">
+                    <div class="finance-card gold"><div class="title">Рыночная цена м²</div><div style="display:flex; align-items:baseline; justify-content:center; gap:4px;"><input type="number" id="marketPriceInput" value="600" class="eco-input" style="width:80px; text-align:center; font-size:1.2em; font-weight:900; background:transparent; border:none; border-bottom:1px dashed var(--money); color:var(--money);"><span class="value" style="color:var(--money);">₽</span></div><div class="sub">руб/м²</div></div>
+                    <div class="finance-card blue"><div class="title">Себестоимость 1 м²</div><div class="value" id="finSq">0 ₽</div><div class="sub" id="vatLabelSq"></div></div>
+                    <div class="finance-card green" onclick="printPDF()" title="Нажмите, чтобы скачать плановую калькуляцию">
+                        <div class="title">Итого брикет</div>
+                        <div class="value" id="finTotal">0 ₽</div>
+                        <div class="sub" id="vatLabelTotal"></div>
+                    </div>
+                </div>
+                <div class="profit-row" id="profitRow"><span><i class="fas fa-chart-line"></i> Рентабельность</span><span id="profitText" style="color:var(--money)">...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно сохранения -->
+    <div id="saveModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Сохранить расчёт</h2>
+            <input type="text" id="saveNameInput" placeholder="Введите название расчёта">
+            <div class="modal-buttons">
+                <button class="btn" onclick="confirmSave()">Сохранить</button>
+                <button class="btn" onclick="closeSaveModal()" style="background: #475569;">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно истории -->
+    <div id="historyModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 700px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2>История расчётов</h2>
+                <button onclick="closeHistory()" style="background:none; border:none; color:var(--text-dim); font-size:1.5em; cursor:pointer;">&times;</button>
+            </div>
+            <div id="historyList" style="display:flex; flex-direction:column; gap:8px;">
+                <!-- динамически заполняется -->
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:16px;">
+                <button class="btn" onclick="clearAllHistory()" style="background:var(--danger);"><i class="fas fa-trash"></i> Очистить всё</button>
+                <button class="btn" onclick="closeHistory()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const SAVE_KEYS = [
+                'shiftDate', 'shiftNumber', 'briquetQty',
+                'lenInput', 'lenRange', 'widInput', 'widRange', 'defectInput', 'defectRange',
+                'foilT', 'cell', 'targetP',
+                'marginInput', 'marginRange', 'stripInput', 'stripRange',
+                'p_foil', 'p_scrap', 'p_glue', 'p_solv',
+                'f_ppl', 'f_sal', 'f_plan', 'p_ovh',
+                'vatVal', 'useVAT', 'marketPriceInput'
+            ];
+
+            function saveState() {
+                const data = {};
+                SAVE_KEYS.forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) data[key] = (el.type === 'checkbox') ? el.checked : el.value;
+                });
+                localStorage.setItem('briquetMaster_settings', JSON.stringify(data));
+            }
+
+            function loadState() {
+                const saved = localStorage.getItem('briquetMaster_settings');
+                if (!saved) return;
+                try {
+                    const data = JSON.parse(saved);
+                    Object.keys(data).forEach(key => {
+                        const el = document.getElementById(key);
+                        if (el) {
+                            if (el.type === 'checkbox') el.checked = data[key];
+                            else el.value = data[key];
+                        }
+                    });
+                    syncRangesToInputs();
+                } catch (e) {}
+            }
+
+            function syncRangesToInputs() {
+                document.getElementById('lenInput').value = document.getElementById('lenRange').value;
+                document.getElementById('widInput').value = document.getElementById('widRange').value;
+                document.getElementById('defectInput').value = document.getElementById('defectRange').value;
+                document.getElementById('marginInput').value = document.getElementById('marginRange').value;
+                document.getElementById('stripInput').value = parseFloat(document.getElementById('stripRange').value).toFixed(1);
+            }
+
+            window.calculate = function() {
+                const L = parseFloat(document.getElementById('lenInput').value) || 0;
+                const B = parseFloat(document.getElementById('widInput').value) || 0;
+                const cellSize = parseFloat(document.getElementById('cell').value);
+                const foilT = parseFloat(document.getElementById('foilT').value);
+                const targetP = parseFloat(document.getElementById('targetP').value) || 0;
+                const margin = parseInt(document.getElementById('marginInput').value) || 0;
+                const defectP = parseFloat(document.getElementById('defectInput').value) || 0;
+                const stripW = parseFloat(document.getElementById('stripInput').value) || 0;
+                const briquetQty = parseInt(document.getElementById('briquetQty').value) || 1;
+                const FOIL_W = 590,
+                    USABLE_W = 570,
+                    BLADE = 3.5,
+                    PISTON_S = 2 * Math.PI * Math.pow(40, 2);
+                const bLen = B * 1.5;
+                document.getElementById('warning').style.display = (bLen > 2000) ? 'block' : 'none';
+                const nPure = Math.ceil(L / (cellSize / 2)) + (margin * 2);
+                const foilMassPure = (nPure * bLen * FOIL_W * foilT * 2.7) / 1000000;
+                const foilMassTotal = foilMassPure * (1 + defectP / 100);
+                const massLiqGluePure = (nPure * bLen / 1000 * FOIL_W / 1000) * 0.25 * 0.030;
+                const glueTotalWithDefect = massLiqGluePure * (1 + defectP / 100);
+                const strips = stripW > 0 ? Math.floor(USABLE_W / (stripW + BLADE)) : 0;
+                const totalOutputM2 = (strips * L * B) / 1000000;
+
+                const totalStrips = strips * briquetQty;
+                const totalOutputM2All = totalOutputM2 * briquetQty;
+                const foilMassPureTotal = foilMassPure * briquetQty;
+                const foilMassTotalAll = foilMassTotal * briquetQty;
+                const defectKgTotal = (foilMassTotal - foilMassPure) * briquetQty;
+                const glueTotalAll = glueTotalWithDefect * briquetQty;
+                const glueA_kg = glueTotalAll * 0.2;
+                const solv_kg = glueTotalAll * 0.8;
+                const massTotalVal = (foilMassPure + (massLiqGluePure * 0.2)) * briquetQty;
+
+                document.getElementById('resN').innerText = nPure;
+                document.getElementById('resBL').innerText = Math.round(bLen);
+                document.getElementById('resThick').innerText = Math.round(nPure * foilT * 1.1273);
+                document.getElementById('resBar').innerText = Math.round(((bLen * FOIL_W * 0.45 / 100) * targetP) / (PISTON_S * 0.1)) + ' Бар';
+                document.getElementById('resStrips').innerText = totalStrips;
+                document.getElementById('resTotalArea').innerText = totalOutputM2All.toFixed(1);
+                document.getElementById('resFoilMass').innerText = foilMassPureTotal.toFixed(1);
+                document.getElementById('resFoilTotal').innerText = foilMassTotalAll.toFixed(1);
+                document.getElementById('resDefectKg').innerText = defectKgTotal.toFixed(1);
+                document.getElementById('resGlueTotal').innerText = glueTotalAll.toFixed(1);
+                document.getElementById('resGlueA').innerText = glueA_kg.toFixed(1);
+                document.getElementById('resSolvent').innerText = solv_kg.toFixed(1);
+                document.getElementById('resMass').innerText = massTotalVal.toFixed(1);
+
+                const scrapPrice = parseFloat(document.getElementById('p_scrap').value) || 0;
+                const scrapCredit = (foilMassTotal - foilMassPure) * scrapPrice;
+                const matCostNoVAT = foilMassTotal * parseFloat(document.getElementById('p_foil').value) +
+                    glueTotalWithDefect * 0.2 * parseFloat(document.getElementById('p_glue').value) +
+                    glueTotalWithDefect * 0.8 * parseFloat(document.getElementById('p_solv').value) - scrapCredit;
+                const fotPerBriquet = (parseFloat(document.getElementById('f_ppl').value) * parseFloat(document.getElementById('f_sal').value)) / parseFloat(document.getElementById('f_plan').value);
+                const ovhPercent = parseFloat(document.getElementById('p_ovh').value) / 100;
+                const ovhValue = (matCostNoVAT + fotPerBriquet) * ovhPercent;
+                const totalNoVAT = matCostNoVAT + fotPerBriquet + ovhValue;
+                const vatRate = parseFloat(document.getElementById('vatVal').value) / 100;
+                const useVAT = document.getElementById('useVAT').checked;
+                const vatAmount = useVAT ? totalNoVAT * vatRate : 0;
+                const totalCost = totalNoVAT + vatAmount;
+                const costPerM2 = totalOutputM2 > 0 ? totalCost / totalOutputM2 : 0;
+
+                document.getElementById('anaMat').innerText = Math.round(matCostNoVAT).toLocaleString() + ' ₽';
+                document.getElementById('anaFot').innerText = Math.round(fotPerBriquet).toLocaleString() + ' ₽';
+                document.getElementById('anaOvh').innerText = Math.round(ovhValue).toLocaleString() + ' ₽';
+                document.getElementById('anaVat').innerText = Math.round(vatAmount).toLocaleString() + ' ₽';
+
+                const pctMat = totalCost > 0 ? (matCostNoVAT / totalCost * 100) : 0;
+                const pctFot = totalCost > 0 ? (fotPerBriquet / totalCost * 100) : 0;
+                const pctOvh = totalCost > 0 ? (ovhValue / totalCost * 100) : 0;
+                const pctVat = totalCost > 0 ? (vatAmount / totalCost * 100) : 0;
+                document.getElementById('anaMatPct').innerText = pctMat.toFixed(1) + '%';
+                document.getElementById('anaFotPct').innerText = pctFot.toFixed(1) + '%';
+                document.getElementById('anaOvhPct').innerText = pctOvh.toFixed(1) + '%';
+                document.getElementById('anaVatPct').innerText = pctVat.toFixed(1) + '%';
+
+                document.getElementById('c_mat').style.width = pctMat + '%';
+                document.getElementById('c_fot').style.width = pctFot + '%';
+                document.getElementById('c_ovh').style.width = pctOvh + '%';
+                document.getElementById('c_vat').style.width = pctVat + '%';
+
+                const vatLabel = useVAT ? 'с НДС' : 'без НДС';
+                document.getElementById('finSq').innerText = Math.round(costPerM2).toLocaleString() + ' ₽';
+                document.getElementById('vatLabelSq').innerText = vatLabel;
+                const mPrice = parseFloat(document.getElementById('marketPriceInput').value) || 0;
+                document.getElementById('finTotal').innerText = Math.round(totalCost).toLocaleString() + ' ₽';
+                document.getElementById('vatLabelTotal').innerText = vatLabel;
+
+                const diff = mPrice - costPerM2;
+                const perc = costPerM2 > 0 ? Math.round((diff / costPerM2) * 100) : 0;
+                const profitEl = document.getElementById('profitText');
+                const profitRow = document.getElementById('profitRow');
+                if (diff >= 0) {
+                    profitEl.innerText = 'ВЫГОДНО  −' + Math.round(diff).toLocaleString() + ' ₽ / ' + perc + '%';
+                    profitEl.style.color = 'var(--success)';
+                    profitRow.classList.add('profitable');
+                    profitRow.classList.remove('unprofitable');
+                } else {
+                    profitEl.innerText = 'ДОРОЖЕ  +' + Math.round(Math.abs(diff)).toLocaleString() + ' ₽ / +' + Math.abs(perc) + '%';
+                    profitEl.style.color = 'var(--danger)';
+                    profitRow.classList.add('unprofitable');
+                    profitRow.classList.remove('profitable');
+                }
+            };
+
+            // Модальное окно сохранения
+            window.openSaveModal = function() {
+                document.getElementById('saveModal').style.display = 'flex';
+                document.getElementById('saveNameInput').value = '';
+                document.getElementById('saveNameInput').focus();
+            };
+            window.closeSaveModal = function() {
+                document.getElementById('saveModal').style.display = 'none';
+            };
+            window.confirmSave = function() {
+                const name = document.getElementById('saveNameInput').value.trim();
+                if (!name) {
+                    alert('Введите название расчёта!');
+                    return;
+                }
+                closeSaveModal();
+                const calc = {
+                    id: Date.now(),
+                    name: name,
+                    date: new Date().toLocaleString('ru-RU'),
+                    params: {
+                        lenInput: document.getElementById('lenInput').value,
+                        widInput: document.getElementById('widInput').value,
+                        defectInput: document.getElementById('defectInput').value,
+                        foilT: document.getElementById('foilT').value,
+                        cell: document.getElementById('cell').value,
+                        targetP: document.getElementById('targetP').value,
+                        marginInput: document.getElementById('marginInput').value,
+                        stripInput: document.getElementById('stripInput').value,
+                        briquetQty: document.getElementById('briquetQty').value,
+                        shiftDate: document.getElementById('shiftDate').value,
+                        shiftNumber: document.getElementById('shiftNumber').value,
+                        p_foil: document.getElementById('p_foil').value,
+                        p_scrap: document.getElementById('p_scrap').value,
+                        p_glue: document.getElementById('p_glue').value,
+                        p_solv: document.getElementById('p_solv').value,
+                        f_ppl: document.getElementById('f_ppl').value,
+                        f_sal: document.getElementById('f_sal').value,
+                        f_plan: document.getElementById('f_plan').value,
+                        p_ovh: document.getElementById('p_ovh').value,
+                        vatVal: document.getElementById('vatVal').value,
+                        useVAT: document.getElementById('useVAT').checked,
+                        marketPriceInput: document.getElementById('marketPriceInput').value,
+                    },
+                    results: {
+                        resN: document.getElementById('resN').innerText,
+                        resBL: document.getElementById('resBL').innerText,
+                        resThick: document.getElementById('resThick').innerText,
+                        resStrips: document.getElementById('resStrips').innerText,
+                        resTotalArea: document.getElementById('resTotalArea').innerText,
+                        resFoilMass: document.getElementById('resFoilMass').innerText,
+                        resFoilTotal: document.getElementById('resFoilTotal').innerText,
+                        resDefectKg: document.getElementById('resDefectKg').innerText,
+                        resGlueTotal: document.getElementById('resGlueTotal').innerText,
+                        resGlueA: document.getElementById('resGlueA').innerText,
+                        resSolvent: document.getElementById('resSolvent').innerText,
+                        resMass: document.getElementById('resMass').innerText,
+                        finTotal: document.getElementById('finTotal').innerText,
+                        finSq: document.getElementById('finSq').innerText,
+                        profitText: document.getElementById('profitText').innerText,
+                    }
+                };
+                let history = JSON.parse(localStorage.getItem('briquetCalcHistory') || '[]');
+                history.push(calc);
+                localStorage.setItem('briquetCalcHistory', JSON.stringify(history));
+                alert('Расчёт сохранён!');
+            };
+
+            // Загрузка расчёта из истории
+            window.loadCalculation = function(calc) {
+                const p = calc.params;
+                document.getElementById('lenInput').value = p.lenInput;
+                document.getElementById('lenRange').value = p.lenInput;
+                document.getElementById('widInput').value = p.widInput;
+                document.getElementById('widRange').value = p.widInput;
+                document.getElementById('defectInput').value = p.defectInput;
+                document.getElementById('defectRange').value = p.defectInput;
+                document.getElementById('foilT').value = p.foilT;
+                document.getElementById('cell').value = p.cell;
+                document.getElementById('targetP').value = p.targetP;
+                document.getElementById('marginInput').value = p.marginInput;
+                document.getElementById('marginRange').value = p.marginInput;
+                document.getElementById('stripInput').value = p.stripInput;
+                document.getElementById('stripRange').value = p.stripInput;
+                document.getElementById('briquetQty').value = p.briquetQty;
+                document.getElementById('shiftDate').value = p.shiftDate;
+                document.getElementById('shiftNumber').value = p.shiftNumber;
+                document.getElementById('p_foil').value = p.p_foil;
+                document.getElementById('p_scrap').value = p.p_scrap;
+                document.getElementById('p_glue').value = p.p_glue;
+                document.getElementById('p_solv').value = p.p_solv;
+                document.getElementById('f_ppl').value = p.f_ppl;
+                document.getElementById('f_sal').value = p.f_sal;
+                document.getElementById('f_plan').value = p.f_plan;
+                document.getElementById('p_ovh').value = p.p_ovh;
+                document.getElementById('vatVal').value = p.vatVal;
+                document.getElementById('useVAT').checked = p.useVAT;
+                document.getElementById('marketPriceInput').value = p.marketPriceInput;
+                calculate();
+                closeHistory();
+                saveState();
+            };
+
+            window.showHistory = function() {
+                const history = JSON.parse(localStorage.getItem('briquetCalcHistory') || '[]');
+                const list = document.getElementById('historyList');
+                list.innerHTML = '';
+                if (history.length === 0) {
+                    list.innerHTML = '<p style="color:var(--text-dim); text-align:center;">Нет сохранённых расчётов.</p>';
+                } else {
+                    history.forEach(calc => {
+                        const div = document.createElement('div');
+                        div.className = 'history-item';
+                        div.innerHTML = `
+                            <div class="info">
+                                <strong style="color:var(--accent);">${calc.name}</strong><br>
+                                <span style="font-size:0.75em; color:var(--text-dim);">${calc.date}</span>
+                                <span style="font-size:0.75em; margin-left:12px;">L=${calc.params.lenInput} B=${calc.params.widInput} фольга ${calc.params.foilT}мм</span>
+                                <span style="font-size:0.75em; margin-left:12px;">Выход: ${calc.results.resTotalArea} м²</span>
+                                <span style="font-size:0.75em; margin-left:12px;">Себест. м²: ${calc.results.finSq}</span>
+                            </div>
+                            <button class="btn delete-btn" onclick="event.stopPropagation(); deleteHistoryItem(${calc.id})"><i class="fas fa-times"></i></button>
+                        `;
+                        div.addEventListener('click', () => loadCalculation(calc));
+                        list.appendChild(div);
+                    });
+                }
+                document.getElementById('historyModal').style.display = 'flex';
+            };
+
+            window.closeHistory = function() {
+                document.getElementById('historyModal').style.display = 'none';
+            };
+
+            window.deleteHistoryItem = function(id) {
+                if (!confirm('Удалить этот расчёт?')) return;
+                let history = JSON.parse(localStorage.getItem('briquetCalcHistory') || '[]');
+                history = history.filter(c => c.id !== id);
+                localStorage.setItem('briquetCalcHistory', JSON.stringify(history));
+                showHistory();
+            };
+
+            window.clearAllHistory = function() {
+                if (!confirm('Удалить ВСЕ сохранённые расчёты?')) return;
+                localStorage.removeItem('briquetCalcHistory');
+                showHistory();
+            };
+
+            // Экспорт JSON
+            window.exportJSON = function() {
+                const history = JSON.parse(localStorage.getItem('briquetCalcHistory') || '[]');
+                const dataStr = JSON.stringify(history, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'briquet_calculations.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // Импорт JSON с автоматической загрузкой последнего расчёта
+            window.importJSON = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!Array.isArray(data)) throw new Error('Неверный формат');
+                        if (!confirm(`Заменить текущую историю (${data.length} записей)? Текущая история будет перезаписана.`)) return;
+                        localStorage.setItem('briquetCalcHistory', JSON.stringify(data));
+                        alert('История успешно импортирована. Загружаю последний расчёт.');
+                        if (data.length > 0) {
+                            loadCalculation(data[data.length - 1]);
+                        }
+                    } catch (err) {
+                        alert('Ошибка чтения файла: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            };
+
+            // Сброс к стандартным настройкам
+            window.resetAll = function() {
+                if (!confirm('Сбросить все параметры к стандартным? Текущие настройки будут потеряны.')) return;
+                localStorage.removeItem('briquetMaster_settings');
+                location.reload();
+            };
+
+            // Закрытие модальных окон по клику на фон
+            document.getElementById('saveModal').addEventListener('click', function(e) {
+                if (e.target === this) closeSaveModal();
+            });
+            document.getElementById('historyModal').addEventListener('click', function(e) {
+                if (e.target === this) closeHistory();
+            });
+
+            // Полная печатная форма сменного задания
+            window.printShiftTask = function() {
+                const L = document.getElementById('lenInput').value;
+                const B = document.getElementById('widInput').value;
+                const foilT = document.getElementById('foilT').value;
+                const cell = document.getElementById('cell').options[document.getElementById('cell').selectedIndex].text;
+                const n = document.getElementById('resN').innerText;
+                const bLen = document.getElementById('resBL').innerText;
+                const thick = document.getElementById('resThick').innerText;
+                const bar = document.getElementById('resBar').innerText;
+                const strips = document.getElementById('resStrips').innerText;
+                const area = document.getElementById('resTotalArea').innerText;
+                const glueTotal = document.getElementById('resGlueTotal').innerText;
+                const glueA = document.getElementById('resGlueA').innerText;
+                const solv = document.getElementById('resSolvent').innerText;
+                const foilTotal = document.getElementById('resFoilTotal').innerText;
+                const briquetQty = document.getElementById('briquetQty').value || 1;
+                const dateVal = document.getElementById('shiftDate').value;
+                const date = dateVal ? new Date(dateVal + 'T00:00:00').toLocaleDateString('ru-RU') : '';
+                const taskNumber = document.getElementById('shiftNumber').value || (Math.floor(Math.random() * 1000) + 100);
+
+                const glueStr = `${glueTotal} кг (А: ${glueA} кг, Этилацетат: ${solv} кг)`;
+
+                const w = window.open('', '_blank', 'width=820,height=750');
+                w.document.write(`<html><head><title>Сменное задание № ${taskNumber}</title><style>@page { size: A4 portrait; margin: 12mm; } body { font-family: 'Inter','Arial',sans-serif; padding:0; margin:0; color:#111; font-size: 13px; line-height:1.4; } .company { font-weight: bold; font-size: 14px; margin-bottom: 15px; } .stamp { text-align:right; margin-bottom:10px; } .stamp span { border:2px solid #111; padding:4px 16px; text-transform:uppercase; font-weight:bold; display:inline-block; font-size:14px; } h1 { text-align:center; font-size:19px; margin:6px 0 2px; } .subtitle { text-align:center; font-size:13px; color:#555; margin-bottom:16px; } .info-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:10px; } table { width:100%; border-collapse:collapse; margin:10px 0; border:1px solid #ccc; } th, td { border:1px solid #ccc; padding:7px 8px; text-align:left; font-size:12px; } th { background:#f5f5f5; width:35%; } .signatures { display:flex; justify-content:space-between; margin-top:20px; font-size:12px; gap:20px; } .sign-block { width:48%; } .sign-line { border-bottom:1px solid #111; margin:18px 0 6px; } .approve-line { display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; } .otk-block { border:1px solid #ccc; padding:12px; margin-top:14px; font-size:11px; } .adm-block { margin-top:20px; font-size:12px; } .adm-block .person { flex:1; border-bottom:1px dashed #aaa; padding-bottom:16px; margin-bottom:8px; } </style></head><body><div class="company">ООО «ЗСМК»</div><div class="stamp"><span>УТВЕРЖДАЮ</span></div><div class="approve-line"><div><strong>Начальник ПТО</strong><br>_____________ /Бажанова О.В./</div><div>«___» __________ 20__ г.</div></div><h1>СМЕННОЕ ЗАДАНИЕ № ${taskNumber}</h1><div class="subtitle">на изготовление сотового заполнителя (брикета)</div><div class="info-row"><span>Дата выдачи: ${date || '___________'}</span><span>План брикетов: <strong>${briquetQty} шт</strong> / Факт: _____ шт</span></div><table><tr><th>Параметр</th><th>План</th><th>Факт</th></tr><tr><td>Размеры растянутой соты (Д × Ш)</td><td>${L} × ${B} мм</td><td></td></tr><tr><td>Толщина фольги</td><td>${foilT} мм</td><td></td></tr><tr><td>Размер ячейки</td><td>${cell}</td><td></td></tr><tr><td>Количество листов в блоке</td><td>${n} шт</td><td></td></tr><tr><td>Длина брикета</td><td>${bLen} мм</td><td></td></tr><tr><td>Толщина брикета (теор.)</td><td>${thick} мм</td><td></td></tr><tr><td>Давление пресса</td><td>${bar}</td><td></td></tr></table><h3 style="margin:12px 0 6px; font-size:14px;">План выпуска / Факт</h3><table><tr><th>Показатель</th><th>План</th><th>Факт</th></tr><tr><td>Количество полос (выход)</td><td>${strips} шт</td><td></td></tr><tr><td>Общая площадь продукции</td><td>${area} м²</td><td></td></tr><tr><td>Общее количество фольги</td><td>${foilTotal} кг</td><td></td></tr><tr><td>Клей (приготовить)</td><td>${glueStr}</td><td></td></tr></table><div class="signatures"><div class="sign-block"><div>Задание выдал:</div><div class="sign-line"></div><div style="font-size:10px;">(Начальник ПТО Бажанова О.В.)</div></div><div class="sign-block"><div>Задание получил:</div><div class="sign-line"></div><div style="font-size:10px;">(Мастер смены)</div></div></div><div class="adm-block"><strong>К работе допускаю:</strong><div style="display:flex; gap:24px; margin-top:12px;"><div class="person"><strong>Главный технолог</strong><br><span style="font-size:11px;">_______________ /Фадеев А.Ю./</span><div style="margin-top:18px; font-size:10px;">Замечания: _______________________________</div><div style="margin-top:4px; font-size:10px;">_______________________________</div></div><div class="person"><strong>Главный механик</strong><br><span style="font-size:11px;">_______________ /Переверзев С.В./</span><div style="margin-top:18px; font-size:10px;">Замечания: _______________________________</div><div style="margin-top:4px; font-size:10px;">_______________________________</div></div></div></div><div class="otk-block"><strong>ОТК</strong><p style="margin:4px 0;">Соответствует требованиям технологического регламента:</p><label><input type="checkbox"> Соответствует</label> <label><input type="checkbox"> Не соответствует</label><p>Замечания: ________________________</p><div style="text-align:right; margin-top:8px;">Контролер ОТК _____________ /_______________/</div></div></body></html>`);
+                w.document.close();
+                w.focus();
+                setTimeout(() => w.print(), 300);
+            };
+
+            // Полная печатная форма плановой калькуляции
+            window.printPDF = function() {
+                const briquetQty = document.getElementById('briquetQty').value || 1;
+                const dateVal = document.getElementById('shiftDate').value;
+                const currentDate = dateVal ? new Date(dateVal + 'T00:00:00').toLocaleDateString('ru-RU') : new Date().toLocaleDateString('ru-RU');
+                const taskNumber = document.getElementById('shiftNumber').value || '—';
+
+                const w = window.open('', '_blank', 'width=700,height=600');
+                w.document.write(`<html><head><title>Плановая калькуляция</title><style>@page { size: A4 portrait; margin: 14mm; } body { font-family: 'Inter','Arial',sans-serif; padding:0; margin:0; color:#111; font-size: 13px; line-height:1.5; } .header { text-align:center; margin-bottom:20px; } .company { font-weight:800; font-size:16px; margin-bottom:2px; } .doc-title { font-size:15px; font-weight:700; margin:4px 0; text-transform:uppercase; } .sub-line { font-size:11px; color:#555; } table { width:100%; border-collapse:collapse; margin:16px 0; } th, td { border:1px solid #ccc; padding:8px 10px; text-align:left; font-size:12px; } th { background:#f5f5f5; font-weight:700; } .right { text-align:right; } .total-row { font-weight:bold; background:#fafafa; } .footer { margin-top:24px; font-size:10px; color:#555; text-align:center; } .signature { display:flex; justify-content:space-between; margin-top:22px; font-size:11px; } .signature div { width:45%; } .sign-line { border-bottom:1px solid #111; margin:8px 0 4px; } </style></head><body><div class="header"><div class="company">ООО «ЗСМК»</div><div class="doc-title">Плановая калькуляция</div><div class="sub-line">на изготовление сотового заполнителя (брикета) — ${briquetQty} шт.</div><div class="sub-line">Дата: ${currentDate} &nbsp;|&nbsp; Сменное задание № ${taskNumber}</div></div><table><tr><th>Статья затрат</th><th class="right">Сумма (₽)</th><th class="right">Доля</th></tr><tr><td>Материалы (фольга, клей, растворитель за вычетом лома)</td><td class="right">${document.getElementById('anaMat').innerText.replace(' ₽','')}</td><td class="right">${document.getElementById('anaMatPct').innerText}</td></tr><tr><td>Фонд оплаты труда</td><td class="right">${document.getElementById('anaFot').innerText.replace(' ₽','')}</td><td class="right">${document.getElementById('anaFotPct').innerText}</td></tr><tr><td>Накладные расходы</td><td class="right">${document.getElementById('anaOvh').innerText.replace(' ₽','')}</td><td class="right">${document.getElementById('anaOvhPct').innerText}</td></tr><tr><td>НДС</td><td class="right">${document.getElementById('anaVat').innerText.replace(' ₽','')}</td><td class="right">${document.getElementById('anaVatPct').innerText}</td></tr><tr class="total-row"><td><strong>ИТОГО себестоимость 1 брикета</strong></td><td class="right"><strong>${document.getElementById('finTotal').innerText.replace(' ₽','')}</strong></td><td class="right">100%</td></tr></table><table><tr><td>Рыночная цена 1 м²</td><td class="right">${document.getElementById('marketPriceInput').value} ₽</td></tr><tr><td>Себестоимость 1 м²</td><td class="right">${document.getElementById('finSq').innerText.replace(' ₽','')}</td></tr><tr><td>Рентабельность</td><td class="right">${document.getElementById('profitText').innerText}</td></tr></table><div class="signature"><div><div class="sign-line"></div><span>Составил: _________ /_______________</span></div><div><div class="sign-line"></div><span>Проверил: _________ /_______________</span></div></div></body></html>`);
+                w.document.close();
+                w.focus();
+                setTimeout(() => w.print(), 300);
+            };
+
+            window.onload = function() {
+                loadState();
+
+                const dateInput = document.getElementById('shiftDate');
+                if (!dateInput.value) {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    dateInput.value = `${yyyy}-${mm}-${dd}`;
+                }
+
+                document.getElementById('lenRange').addEventListener('input', function() { document.getElementById('lenInput').value = this.value; calculate(); saveState(); });
+                document.getElementById('widRange').addEventListener('input', function() { document.getElementById('widInput').value = this.value; calculate(); saveState(); });
+                document.getElementById('defectRange').addEventListener('input', function() { document.getElementById('defectInput').value = this.value; calculate(); saveState(); });
+                document.getElementById('marginRange').addEventListener('input', function() { document.getElementById('marginInput').value = this.value; calculate(); saveState(); });
+                document.getElementById('stripRange').addEventListener('input', function() { document.getElementById('stripInput').value = parseFloat(this.value).toFixed(1); calculate(); saveState(); });
+
+                document.getElementById('lenInput').addEventListener('input', function() { document.getElementById('lenRange').value = this.value; calculate(); saveState(); });
+                document.getElementById('widInput').addEventListener('input', function() { document.getElementById('widRange').value = this.value; calculate(); saveState(); });
+                document.getElementById('defectInput').addEventListener('input', function() { document.getElementById('defectRange').value = this.value; calculate(); saveState(); });
+                document.getElementById('marginInput').addEventListener('input', function() { document.getElementById('marginRange').value = this.value; calculate(); saveState(); });
+                document.getElementById('stripInput').addEventListener('input', function() { document.getElementById('stripRange').value = parseFloat(this.value).toFixed(1); calculate(); saveState(); });
+
+                const recalculationIds = ['foilT', 'cell', 'targetP', 'p_foil', 'p_scrap', 'p_glue', 'p_solv', 'f_ppl', 'f_sal', 'f_plan', 'p_ovh', 'vatVal', 'marketPriceInput'];
+                recalculationIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', calculate);
+                        el.addEventListener('change', calculate);
+                    }
+                });
+
+                document.querySelectorAll('input:not([type="range"]), select').forEach(el => {
+                    if (el.id !== 'briquetQty') {
+                        el.addEventListener('input', saveState);
+                        el.addEventListener('change', saveState);
+                    }
+                });
+
+                document.getElementById('useVAT').addEventListener('change', function() {
+                    const vat = parseFloat(document.getElementById('vatVal').value) / 100;
+                    let mPrice = parseFloat(document.getElementById('marketPriceInput').value) || 0;
+                    if (this.checked) mPrice = mPrice * (1 + vat);
+                    else mPrice = mPrice / (1 + vat);
+                    document.getElementById('marketPriceInput').value = Math.round(mPrice);
+                    calculate();
+                    saveState();
+                });
+
+                calculate();
+            };
+        })();
+    </script>
+</body>
+</html>

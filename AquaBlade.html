@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>AquaBlade | Гидроабразивный калькулятор</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c16;
+            --card: #111827;
+            --header: #1a2236;
+            --accent: #00cfe8;
+            --accent2: #0ea5e9;
+            --accent-glow: rgba(0,207,232,0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --white: #f8fafc;
+            --border: #1e293b;
+            --border-light: #334155;
+            --input-bg: #0f172a;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 32px rgba(0,0,0,0.4);
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            letter-spacing: -0.01em; }
+        header { background: var(--card);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            z-index: 10;
+            flex-shrink: 0; }
+        .logo-area { display: flex;
+            align-items: center;
+            gap: 14px; }
+        .logo-icon { width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent), #0891b2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 22px;
+            box-shadow: 0 0 20px var(--accent-glow);
+            position: relative; }
+        .logo-icon::after { content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), transparent);
+            z-index: -1;
+            opacity: 0.7;
+            animation: logoPulse 2.5s ease-in-out infinite; }
+        @keyframes logoPulse { 0%, 100% { opacity: 0.4;
+                transform: scale(1); } 50% { opacity: 0.9;
+                transform: scale(1.06); } }
+        .logo-text { font-size: 22px;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -0.5px;
+            line-height: 1; }
+        .logo-sub { font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500; }
+        .version-badge { background: var(--accent);
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-left: 6px;
+            vertical-align: middle; }
+        .main-container { display: grid;
+            grid-template-columns: 350px 1fr 420px;
+            gap: 20px;
+            padding: 20px;
+            flex-grow: 1;
+            overflow: hidden;
+            min-height: 0; }
+        .column { display: flex;
+            flex-direction: column;
+            gap: 18px;
+            overflow-y: auto;
+            padding-right: 6px;
+            scroll-behavior: smooth; }
+        .column::-webkit-scrollbar { width: 5px; }
+        .column::-webkit-scrollbar-track { background: transparent; }
+        .column::-webkit-scrollbar-thumb { background: var(--border-light);
+            border-radius: 20px; }
+        .card { background: var(--card);
+            border-radius: var(--radius);
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column; }
+        .card:hover { border-color: #2a3a52; }
+        .card-title { display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px; }
+        .card-title .icon-circle { width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; }
+        .icon-circle.material { background: rgba(0,207,232,0.12);
+            color: var(--accent); }
+        .icon-circle.abrasive { background: rgba(245,158,11,0.12);
+            color: var(--warning); }
+        .icon-circle.geometry { background: rgba(16,185,129,0.12);
+            color: var(--success); }
+        .icon-circle.results { background: rgba(139,92,246,0.12);
+            color: #a78bfa; }
+        .card-title svg { width: 16px;
+            height: 16px; }
+        .form-group { margin-bottom: 15px; }
+        .label-row { display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 7px; }
+        .label { font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.3px; }
+        .val-badge { font-size: 12px;
+            color: var(--accent);
+            font-weight: 700;
+            background: rgba(0,207,232,0.08);
+            padding: 2px 10px;
+            border-radius: 12px; }
+        select,
+        input[type="number"] { width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            color: var(--white);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            transition: var(--transition); }
+        select:focus,
+        input[type="number"]:focus { border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,207,232,0.08); }
+        input[type="range"] { width: 100%;
+            accent-color: var(--accent);
+            margin-top: 6px;
+            height: 8px;
+            cursor: pointer; }
+        .inline-input { width: 93px !important;
+            text-align: center; }
+        .switch { position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0; }
+        .switch input { opacity: 0;
+            width: 0;
+            height: 0; }
+        .slider { position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: var(--transition);
+            border-radius: 22px; }
+        .slider:before { position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: var(--transition);
+            border-radius: 50%; }
+        input:checked+.slider { background-color: var(--success); }
+        input:checked+.slider:before { transform: translateX(18px); }
+        .dxf-zone { border: 2px dashed var(--border-light);
+            padding: 28px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(0,207,232,0.015);
+            position: relative; }
+        .dxf-zone:hover { border-color: var(--accent);
+            background: rgba(0,207,232,0.04);
+            box-shadow: 0 0 40px rgba(0,207,232,0.06); }
+        .dxf-zone svg { width: 40px;
+            height: 40px;
+            color: var(--accent);
+            margin-bottom: 12px;
+            opacity: 0.8; }
+        .dxf-text { display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.5px; }
+        .dxf-sub { font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px; }
+        .dxf-loaded-indicator { display: none;
+            background: var(--success);
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-top: 10px; }
+        .dxf-zone.loaded .dxf-loaded-indicator { display: inline-block; }
+        .dxf-zone.loaded { border-color: var(--success);
+            border-style: solid;
+            background: rgba(16,185,129,0.03); }
+        .stat-grid { display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px; }
+        .stat-card { background: var(--input-bg);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--accent);
+            transition: var(--transition); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-label { font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            display: block;
+            font-weight: 600; }
+        .stat-value { font-size: 20px;
+            font-weight: 800;
+            color: var(--white);
+            margin-top: 5px;
+            letter-spacing: -0.5px; }
+        .table-res { width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 14px; }
+        .table-res td { padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted); }
+        .table-res td:nth-child(2) { text-align: right;
+            font-weight: 600;
+            color: var(--white); }
+        .table-res td:nth-child(3) { text-align: right;
+            font-weight: 700;
+            width: 60px; }
+        .perc-dot { display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle; }
+        .total-banner { background: linear-gradient(135deg, #0b3d4a, #082f3a, #0b3d4a);
+            padding: 26px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            color: #fff;
+            margin-bottom: 14px;
+            border: 1px solid rgba(0,207,232,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; }
+        .total-banner:hover { transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,207,232,0.4); }
+        .total-banner::before { content: '';
+            position: absolute;
+            top: -30%;
+            left: -20%;
+            width: 140%;
+            height: 160%;
+            background: radial-gradient(circle, rgba(0,207,232,0.1) 0%, transparent 70%);
+            pointer-events: none; }
+        .total-title { font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 2px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1; }
+        .total-amount { font-size: 40px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 1; }
+        .per-meter-badge { background: var(--input-bg);
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border: 1px solid var(--border);
+            margin-bottom: 14px; }
+        .per-meter-badge .stat-label { color: var(--text-muted); }
+        .per-meter-badge .stat-value { color: var(--success);
+            font-size: 22px; }
+        .btn-print,
+        .btn-reset { width: 100%;
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: none;
+            color: #000;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+            margin-top: auto; }
+        .btn-print { background: var(--success);
+            display: none; }
+        .btn-print:hover { background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16,185,129,0.3); }
+        .btn-reset { background: var(--header);
+            border: 1px solid var(--border-light);
+            color: var(--text-main); }
+        .btn-reset:hover { background: #243044;
+            border-color: var(--accent);
+            box-shadow: 0 0 16px rgba(0,207,232,0.15);
+            transform: translateY(-1px); }
+        .btn-reset svg { width: 15px;
+            height: 15px; }
+        .btn-save,
+        .btn-history { flex: 1;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            background: var(--header);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.3px; }
+        .btn-save:hover,
+        .btn-history:hover { background: #243044;
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(0,207,232,0.15);
+            transform: translateY(-1px); }
+        hr { border: 0;
+            border-top: 1px solid var(--border);
+            margin: 18px 0; }
+        .thickness-control { display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px; }
+        .thickness-btn { background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            color: var(--white);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: var(--transition); }
+        .thickness-btn:hover { border-color: var(--accent);
+            background: rgba(0,207,232,0.1); }
+        .thickness-input { width: 90px;
+            text-align: center; }
+        .flex-grow { flex-grow: 1; }
+        .bar-chart { height: 12px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            gap: 2px; }
+        .bar-segment { height: 100%;
+            transition: width 0.3s;
+            min-width: 2px; }
+        /* Модальное окно */
+        .modal-overlay { position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s; }
+        .modal-overlay.active { visibility: visible;
+            opacity: 1; }
+        .modal-box { background: var(--card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 480px;
+            max-width: 90vw;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 18px; }
+        .modal-input { width: 100%;
+            padding: 12px;
+            margin-bottom: 14px; }
+        .modal-btn-row { display: flex;
+            gap: 10px;
+            justify-content: flex-end; }
+        .modal-btn { padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition); }
+        .modal-btn.confirm { background: var(--accent);
+            color: #000; }
+        .modal-btn.confirm:hover { background: #0ea5e9; }
+        .modal-btn.cancel { background: var(--header);
+            color: var(--text-muted);
+            border: 1px solid var(--border-light); }
+        .modal-btn.cancel:hover { background: #243044; }
+        .history-item { padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center; }
+        .history-item:hover { border-color: var(--accent);
+            background: rgba(0,207,232,0.04); }
+        .history-item .hi-name { font-weight: 600;
+            color: var(--white);
+            flex: 1; }
+        .history-item .hi-date { font-size: 11px;
+            color: var(--text-muted);
+            margin-left: 8px; }
+        .history-item .hi-total { font-weight: 700;
+            color: var(--accent);
+            margin: 0 12px; }
+        .history-item .hi-delete { background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 6px;
+            opacity: 0.7;
+            transition: 0.2s; }
+        .history-item .hi-delete:hover { opacity: 1;
+            transform: scale(1.2); }
+        @media print {
+            body { background: #fff !important;
+                color: #000 !important;
+                overflow: visible !important;
+                height: auto !important; }
+            header,
+            .main-container,
+            .btn-print,
+            .btn-reset { display: none !important; }
+            #print-report { display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                padding: 30px 40px;
+                color: #000;
+                background: #fff;
+                z-index: 99999;
+                visibility: visible !important;
+                opacity: 1 !important; }
+            @page { margin: 15mm;
+                size: A4; }
+        }
+        #print-report { display: none;
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            z-index: -1;
+            pointer-events: none; }
+        #print-report .kp-header { display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #0b3d4a;
+            padding-bottom: 20px;
+            margin-bottom: 25px; }
+        #print-report .kp-company-name { font-size: 24px;
+            font-weight: 900;
+            color: #0b3d4a !important;
+            letter-spacing: -0.5px; }
+        #print-report .kp-company-sub { font-size: 12px;
+            color: #444;
+            margin-top: 4px; }
+        #print-report .kp-doc-title { font-size: 18px;
+            font-weight: 700;
+            text-align: right;
+            color: #0b3d4a !important;
+            text-transform: uppercase;
+            letter-spacing: 2px; }
+        #print-report table.kp-table { width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            font-size: 13px; }
+        #print-report table.kp-table th { background: #0b3d4a;
+            color: #fff !important;
+            padding: 12px 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px; }
+        #print-report table.kp-table td { padding: 12px 14px;
+            border-bottom: 1px solid #ddd;
+            color: #222 !important; }
+        #print-report .kp-total-row { font-size: 20px;
+            font-weight: 900;
+            background: #f0f9fa;
+            padding: 16px 20px;
+            border-radius: 6px;
+            text-align: right;
+            color: #0b3d4a !important;
+            border: 2px solid #0b3d4a;
+            margin-top: 10px; }
+        #print-report .kp-footer { font-size: 10px;
+            color: #666 !important;
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">🔹</div>
+            <div>
+                <div class="logo-text">Aqua<span style="color:var(--accent)">Blade</span></div>
+                <div class="logo-sub">Гидроабразивный расчёт</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Левая колонка -->
+        <div class="column">
+            <div class="card">
+                <div class="card-title"><div class="icon-circle material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h2m16 0h2M12 2v2m0 16v2m-6-6h12"/><circle cx="12" cy="12" r="8"/></svg></div> Материал и толщина</div>
+                <div class="form-group">
+                    <span class="label">Тип заготовки</span>
+                    <select id="mat" onchange="calc()">
+                        <option value="1.0">Сталь углеродистая</option>
+                        <option value="1.2">Сталь нержавеющая</option>
+                        <option value="0.5">Алюминий</option>
+                        <option value="1.6">Титан</option>
+                        <option value="1.4">Медь / Латунь</option>
+                        <option value="1.5">Камень / Керамогранит</option>
+                        <option value="0.6">Стекло</option>
+                        <option value="0.3">Пластик / ПВХ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="label-row"><span class="label">Толщина (мм)</span><span class="val-badge" id="thickDisp">10.0</span></div>
+                    <div class="thickness-control">
+                        <button class="thickness-btn" onclick="changeThickness(-1)">−</button>
+                        <input type="number" id="thickVal" value="10.0" step="0.1" class="thickness-input" oninput="syncThicknessFromInput()">
+                        <button class="thickness-btn" onclick="changeThickness(1)">+</button>
+                    </div>
+                    <input type="range" id="thickR" min="0.5" max="100" value="10" step="1" oninput="syncThicknessFromSlider()">
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: auto;">
+                <div class="card-title"><div class="icon-circle abrasive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="6" r="3"/><circle cx="12" cy="14" r="3"/><circle cx="18" cy="16" r="3"/><circle cx="6" cy="16" r="3"/></svg></div> Абразив и ресурсы</div>
+                <div class="form-group">
+                    <span class="label">Фракция (Mesh)</span>
+                    <select id="sandMesh" onchange="updateSandPrice(); calc()">
+                        <option value="1.2" data-price="100">80 MESH (Грубый рез)</option>
+                        <option value="1.0" data-price="110" selected>120 MESH (Стандарт)</option>
+                        <option value="0.8" data-price="125">200 MESH (Тонкий рез)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="label-row"><span class="label">Цена песка (₽/кг)</span><input type="number" id="sandP" value="110" class="inline-input" oninput="calc()"></div>
+                </div>
+                <div class="form-group">
+                    <div class="label-row"><span class="label">ЗП оператора (чистыми, ₽/мес)</span><input type="number" id="salary" value="100000" class="inline-input" oninput="calc()"></div>
+                </div>
+                <div class="form-group">
+                    <div class="label-row"><span class="label">Накладные расходы (%)</span><span class="val-badge" id="overDisp">50%</span></div>
+                    <input type="range" id="overR" min="0" max="200" value="50" oninput="document.getElementById('overDisp').innerText=this.value+'%'; calc()">
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <span class="label">Наценка / Скидка (%)</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="discMode" style="font-size:9px; color:var(--warning); font-weight:600;">АВТО</span>
+                            <label class="switch"><input type="checkbox" id="autoDisc" checked onchange="toggleDiscountMode()"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                    <input type="number" id="discVal" value="0" step="0.1" oninput="calc()">
+                </div>
+                <div class="form-group">
+                    <div class="label-row"><span class="label">Прибыль (%)</span><span class="val-badge" id="profitDisp">20%</span></div>
+                    <input type="range" id="profitR" min="0" max="300" value="20" oninput="document.getElementById('profitDisp').innerText=this.value+'%'; calc()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Центральная колонка -->
+        <div class="column">
+            <div class="card flex-grow" style="flex-grow:1;">
+                <div class="card-title"><div class="icon-circle geometry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div> Геометрия реза</div>
+                <div class="dxf-zone" id="dxfZone" onclick="document.getElementById('fileIn').click()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span class="dxf-text">ЗАГРУЗИТЬ DXF ЧЕРТЁЖ</span>
+                    <span class="dxf-sub">Авто-расчёт длины и контуров</span>
+                    <span class="dxf-loaded-indicator">✓ ФАЙЛ ЗАГРУЖЕН</span>
+                    <input type="file" id="fileIn" accept=".dxf" hidden onchange="handleDXF(this)">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px;">
+                    <div class="form-group">
+                        <div class="label-row"><span class="label">Длина реза (м)</span></div>
+                        <input type="number" id="lenV" value="1.0" step="0.1" oninput="syncLenFromInput()">
+                        <input type="range" id="lenR" min="0.1" max="100" value="1" step="0.1" oninput="syncLenFromSlider()">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-row"><span class="label">Врезки (шт)</span></div>
+                        <input type="number" id="pierceV" value="1" step="1" oninput="syncPierceFromInput()">
+                        <input type="range" id="pierceR" min="0" max="500" value="1" step="1" oninput="syncPierceFromSlider()">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-row"><span class="label">Кол-во деталей</span></div>
+                        <input type="number" id="qtyV" value="1" step="1" oninput="syncQtyFromInput()">
+                        <input type="range" id="qtyR" min="1" max="200" value="1" step="1" oninput="syncQtyFromSlider()">
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <div class="label-row">
+                        <div style="display:flex; align-items:center; gap:10px;"><span class="label">Скорость резки (мм/мин)</span><label class="switch"><input type="checkbox" id="manSpd" onchange="calc()"><span class="slider"></span></label></div>
+                        <span class="val-badge" id="spdDisp">200</span>
+                    </div>
+                    <input type="range" id="spdR" min="10" max="3000" value="200" oninput="document.getElementById('spdDisp').innerText=this.value; calc()">
+                </div>
+                <div class="form-group">
+                    <div class="label-row">
+                        <div style="display:flex; align-items:center; gap:10px;"><span class="label">Расход абразива (г/мин)</span><label class="switch"><input type="checkbox" id="manSnd" onchange="calc()"><span class="slider"></span></label></div>
+                        <span class="val-badge" id="sndDisp">350</span>
+                    </div>
+                    <input type="range" id="sndR" min="50" max="1000" value="350" oninput="document.getElementById('sndDisp').innerText=this.value; calc()">
+                </div>
+                <!-- Кнопки сохранения, истории, экспорта/импорта -->
+                <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                    <button class="btn-save" onclick="saveCalc()">💾 Сохранить</button>
+                    <button class="btn-history" onclick="openHistory()">📋 История</button>
+                    <button class="btn-save" onclick="exportAsJSON()">📥 Экспорт JSON</button>
+                    <button class="btn-save" onclick="document.getElementById('importFile').click()">📤 Импорт JSON</button>
+                    <input type="file" id="importFile" accept=".json" hidden onchange="importJSON(this)">
+                </div>
+                <button class="btn-reset" onclick="window.location.reload()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.5 17.5A9 9 0 1 0 1 10"/></svg> СБРОС ВСЕХ НАСТРОЕК
+                </button>
+            </div>
+        </div>
+
+        <!-- Правая колонка -->
+        <div class="column">
+            <div class="card flex-grow" style="flex-grow:1;">
+                <div class="card-title"><div class="icon-circle results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div> Параметры выполнения</div>
+                <div class="stat-grid">
+                    <div class="stat-card"><span class="stat-label">Чистое время</span><div class="stat-value" id="resTime">0.0 мин</div></div>
+                    <div class="stat-card warning"><span class="stat-label">Песок всего</span><div class="stat-value" id="resSand">0.0 кг</div></div>
+                </div>
+                <table class="table-res">
+                    <tr><td>Песок (расход)</td><td id="rowSand">0 ₽</td><td class="perc-col" id="pSand" style="color:#f59e0b;">0%</td></tr>
+                    <tr><td>ФОТ Оператора</td><td id="rowFot">0 ₽</td><td class="perc-col" id="pFot" style="color:#0ea5e9;">0%</td></tr>
+                    <tr><td>Амортизация / Накладные</td><td id="rowOver">0 ₽</td><td class="perc-col" id="pOver" style="color:#a78bfa;">0%</td></tr>
+                    <tr><td>Скидка / Наценка</td><td id="rowDisc">0 ₽</td><td class="perc-col" id="pDisc" style="color:#ef4444;">0%</td></tr>
+                    <tr><td>Прибыль</td><td id="rowProfit">0 ₽</td><td class="perc-col" id="pProfit" style="color:#10b981;">0%</td></tr>
+                    <tr>
+                        <td>НДС (22%) <label class="switch" style="display:inline-flex; margin-left:8px; vertical-align:middle;"><input type="checkbox" id="useVat" checked onchange="calc()"><span class="slider"></span></label></td>
+                        <td id="rowVat">0 ₽</td>
+                        <td class="perc-col" id="pVat" style="color:#94a3b8;">0%</td>
+                    </tr>
+                </table>
+                <!-- Графический индикатор соотношения статей -->
+                <div class="bar-chart" id="barChart">
+                    <span class="bar-segment" id="barSand" style="background:#f59e0b; width:0%;"></span>
+                    <span class="bar-segment" id="barFot" style="background:#0ea5e9; width:0%;"></span>
+                    <span class="bar-segment" id="barOver" style="background:#a78bfa; width:0%;"></span>
+                    <span class="bar-segment" id="barDisc" style="background:#ef4444; width:0%;"></span>
+                    <span class="bar-segment" id="barProfit" style="background:#10b981; width:0%;"></span>
+                    <span class="bar-segment" id="barVat" style="background:#94a3b8; width:0%;"></span>
+                </div>
+                <div class="total-banner" id="totalBanner" onclick="prepareAndPrint()">
+                    <div class="total-title" id="vatStatus">ИТОГО К ОПЛАТЕ (с НДС 22%)</div>
+                    <div class="total-amount" id="resTotal">0 ₽</div>
+                </div>
+                <div class="per-meter-badge">
+                    <span class="stat-label">Стоимость за 1 м.п.</span>
+                    <div class="stat-value" id="resPerMeter">0 ₽</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно сохранения -->
+    <div class="modal-overlay" id="modalSave">
+        <div class="modal-box">
+            <div class="modal-title">💾 Сохранить расчёт</div>
+            <input type="text" class="modal-input" id="saveName" placeholder="Название расчёта (например: Заказ №45, сталь 10мм)">
+            <div class="modal-btn-row">
+                <button class="modal-btn cancel" onclick="closeModal('modalSave')">Отмена</button>
+                <button class="modal-btn confirm" onclick="confirmSave()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно истории -->
+    <div class="modal-overlay" id="modalHistory">
+        <div class="modal-box" style="max-height:80vh; overflow-y:auto;">
+            <div class="modal-title">📋 История сохранённых расчётов</div>
+            <div id="historyList" style="max-height:50vh; overflow-y:auto;"></div>
+            <div class="modal-btn-row" style="margin-top:16px; justify-content:space-between;">
+                <button class="modal-btn cancel" onclick="exportHistoryAsJSON()">📥 Экспорт всей истории</button>
+                <button class="modal-btn cancel" onclick="closeModal('modalHistory')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрытый блок КП -->
+    <div id="print-report">
+        <div class="kp-header">
+            <div>
+                <div class="kp-company-name">ООО «ЗСМК»</div>
+                <div class="kp-company-sub">Услуга гидроабразивной резки<br>Московская обл., Сергиев Посад, пр-т Красной Армии, 212в, к22, тер. АО «ЗОМЗ»<br>+7 926 641 0901</div>
+            </div>
+            <div class="kp-doc-title">КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ<br><span style="font-size:12px; font-weight:400; color:#555;" id="kpDate"></span></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:12px; color:#333;">
+            <div><strong>Заказчику:</strong> ___________________________</div>
+            <div><strong>№ КП:</strong> <span id="kpNum">AB-2026-001</span></div>
+        </div>
+        <table class="kp-table" id="kpTable">
+            <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+            <tbody id="kpBody"></tbody>
+        </table>
+        <div class="kp-total-row" id="kpTotal">ИТОГО К ОПЛАТЕ: 0 ₽</div>
+        <div style="font-size:11px; color:#444; margin-top:15px;">
+            <strong>Условия:</strong> Предложение действительно 14 дней. Оплата: 50% предоплата, 50% по готовности. Срок изготовления: от 1 рабочего дня. Цены указаны с НДС 22%.
+        </div>
+        <div class="kp-footer">
+            <span>© ООО «ЗСМК» · Гидроабразивная резка</span>
+            <span>Подпись: _______________ / _______________</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ─── Вспомогательные функции толщины ──────────────────────────
+            const thickValInput = document.getElementById('thickVal');
+            const thickSlider = document.getElementById('thickR');
+            const thickDisp = document.getElementById('thickDisp');
+
+            window.changeThickness = function(delta) {
+                let cur = parseFloat(thickValInput.value) || 10;
+                let newVal = cur + delta;
+                if (newVal < 0.5) newVal = 0.5;
+                if (newVal > 100) newVal = 100;
+                thickValInput.value = newVal.toFixed(1);
+                thickSlider.value = Math.round(newVal);
+                thickDisp.innerText = newVal.toFixed(1);
+                calc();
+            };
+
+            window.syncThicknessFromInput = function() {
+                let val = parseFloat(thickValInput.value);
+                if (isNaN(val)) return;
+                if (val < 0.5) val = 0.5;
+                if (val > 100) val = 100;
+                thickValInput.value = val.toFixed(1);
+                thickSlider.value = Math.round(val);
+                thickDisp.innerText = val.toFixed(1);
+                calc();
+            };
+
+            window.syncThicknessFromSlider = function() {
+                let val = parseInt(thickSlider.value, 10);
+                thickValInput.value = val;
+                thickDisp.innerText = val.toFixed(1);
+                calc();
+            };
+
+            // ─── Синхронизация новых ползунков ─────────────────────────
+            window.syncLenFromInput = function() {
+                let val = parseFloat(document.getElementById('lenV').value);
+                if (isNaN(val)) return;
+                if (val < 0.1) val = 0.1;
+                if (val > 100) val = 100;
+                document.getElementById('lenV').value = val.toFixed(1);
+                document.getElementById('lenR').value = val;
+                calc();
+            };
+            window.syncLenFromSlider = function() {
+                let val = parseFloat(document.getElementById('lenR').value);
+                document.getElementById('lenV').value = val.toFixed(1);
+                calc();
+            };
+            window.syncPierceFromInput = function() {
+                let val = parseInt(document.getElementById('pierceV').value) || 0;
+                if (val < 0) val = 0;
+                if (val > 500) val = 500;
+                document.getElementById('pierceV').value = val;
+                document.getElementById('pierceR').value = val;
+                calc();
+            };
+            window.syncPierceFromSlider = function() {
+                let val = parseInt(document.getElementById('pierceR').value);
+                document.getElementById('pierceV').value = val;
+                calc();
+            };
+            window.syncQtyFromInput = function() {
+                let val = parseInt(document.getElementById('qtyV').value) || 1;
+                if (val < 1) val = 1;
+                if (val > 200) val = 200;
+                document.getElementById('qtyV').value = val;
+                document.getElementById('qtyR').value = val;
+                calc();
+            };
+            window.syncQtyFromSlider = function() {
+                let val = parseInt(document.getElementById('qtyR').value);
+                document.getElementById('qtyV').value = val;
+                calc();
+            };
+
+            // ─── Переключение режима скидки ──────────────────────────────
+            window.toggleDiscountMode = function() {
+                const auto = document.getElementById('autoDisc').checked;
+                const discInput = document.getElementById('discVal');
+                const discMode = document.getElementById('discMode');
+                discInput.disabled = auto;
+                discMode.innerText = auto ? 'АВТО' : 'РУЧН';
+                if (auto) calc();
+            };
+
+            window.updateSandPrice = function() {
+                const sel = document.getElementById('sandMesh');
+                document.getElementById('sandP').value = sel.options[sel.selectedIndex].getAttribute('data-price');
+            };
+
+            // ─── Модальные окна ──────────────────────────────────────────
+            window.closeModal = function(id) {
+                document.getElementById(id).classList.remove('active');
+            };
+
+            window.openModal = function(id) {
+                document.getElementById(id).classList.add('active');
+            };
+
+            // ─── Сбор текущего состояния ─────────────────────────────────
+            function gatherCurrentState() {
+                return {
+                    name: 'Расчёт ' + new Date().toLocaleString('ru-RU'),
+                    date: new Date().toISOString(),
+                    mat: document.getElementById('mat').value,
+                    matText: document.getElementById('mat').options[document.getElementById('mat').selectedIndex].text,
+                    thick: document.getElementById('thickVal').value,
+                    sandMesh: document.getElementById('sandMesh').value,
+                    sandMeshText: document.getElementById('sandMesh').options[document.getElementById('sandMesh').selectedIndex].text,
+                    sandP: document.getElementById('sandP').value,
+                    salary: document.getElementById('salary').value,
+                    overR: document.getElementById('overR').value,
+                    autoDisc: document.getElementById('autoDisc').checked,
+                    discVal: document.getElementById('discVal').value,
+                    profitR: document.getElementById('profitR').value,
+                    lenV: document.getElementById('lenV').value,
+                    pierceV: document.getElementById('pierceV').value,
+                    qtyV: document.getElementById('qtyV').value,
+                    manSpd: document.getElementById('manSpd').checked,
+                    spdR: document.getElementById('spdR').value,
+                    manSnd: document.getElementById('manSnd').checked,
+                    sndR: document.getElementById('sndR').value,
+                    useVat: document.getElementById('useVat').checked,
+                    total: document.getElementById('resTotal').innerText,
+                    perMeter: document.getElementById('resPerMeter').innerText
+                };
+            }
+
+            // ─── Применение состояния к форме ─────────────────────────────
+            function applyState(data) {
+                document.getElementById('mat').value = data.mat || '1.0';
+                document.getElementById('thickVal').value = data.thick || '10.0';
+                document.getElementById('thickR').value = Math.round(parseFloat(data.thick) || 10);
+                document.getElementById('thickDisp').innerText = parseFloat(data.thick || 10).toFixed(1);
+                document.getElementById('sandMesh').value = data.sandMesh || '1.0';
+                updateSandPrice();
+                document.getElementById('sandP').value = data.sandP || '110';
+                document.getElementById('salary').value = data.salary || '100000';
+                document.getElementById('overR').value = data.overR || 50;
+                document.getElementById('overDisp').innerText = (data.overR || 50) + '%';
+                document.getElementById('autoDisc').checked = data.autoDisc !== false;
+                document.getElementById('discVal').value = data.discVal || 0;
+                document.getElementById('discVal').disabled = data.autoDisc !== false;
+                document.getElementById('discMode').innerText = data.autoDisc !== false ? 'АВТО' : 'РУЧН';
+                document.getElementById('profitR').value = data.profitR || 20;
+                document.getElementById('profitDisp').innerText = (data.profitR || 20) + '%';
+                document.getElementById('lenV').value = data.lenV || '1.0';
+                document.getElementById('lenR').value = data.lenV || 1;
+                document.getElementById('pierceV').value = data.pierceV || 1;
+                document.getElementById('pierceR').value = data.pierceV || 1;
+                document.getElementById('qtyV').value = data.qtyV || 1;
+                document.getElementById('qtyR').value = data.qtyV || 1;
+                document.getElementById('manSpd').checked = data.manSpd || false;
+                document.getElementById('spdR').value = data.spdR || 200;
+                document.getElementById('spdDisp').innerText = data.spdR || 200;
+                document.getElementById('manSnd').checked = data.manSnd || false;
+                document.getElementById('sndR').value = data.sndR || 350;
+                document.getElementById('sndDisp').innerText = data.sndR || 350;
+                document.getElementById('useVat').checked = data.useVat !== false;
+            }
+
+            // ─── Сохранение в историю ─────────────────────────────────────
+            window.saveCalc = function() {
+                document.getElementById('saveName').value = '';
+                openModal('modalSave');
+                setTimeout(() => document.getElementById('saveName').focus(), 100);
+            };
+
+            window.confirmSave = function() {
+                const name = document.getElementById('saveName').value.trim() || ('Расчёт ' + new Date().toLocaleString('ru-RU'));
+                const data = gatherCurrentState();
+                data.name = name;
+                let history = JSON.parse(localStorage.getItem('aquablade_history') || '[]');
+                history.unshift(data);
+                if (history.length > 50) history = history.slice(0, 50);
+                localStorage.setItem('aquablade_history', JSON.stringify(history));
+                closeModal('modalSave');
+            };
+
+            // ─── История: открытие, загрузка, удаление ──────────────────
+            window.openHistory = function() {
+                renderHistoryList();
+                openModal('modalHistory');
+            };
+
+            function renderHistoryList() {
+                const list = document.getElementById('historyList');
+                const history = JSON.parse(localStorage.getItem('aquablade_history') || '[]');
+                if (history.length === 0) {
+                    list.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center;">Нет сохранённых расчётов</div>';
+                } else {
+                    list.innerHTML = history.map((item, index) => `
+                        <div class="history-item">
+                            <div style="flex:1; cursor:pointer;" onclick="loadHistory(${index}); closeModal('modalHistory')">
+                                <div class="hi-name">${item.name}</div>
+                                <div class="hi-date">${new Date(item.date).toLocaleString('ru-RU')}</div>
+                            </div>
+                            <div class="hi-total">${item.total}</div>
+                            <button class="hi-delete" onclick="event.stopPropagation(); deleteHistoryItem(${index})" title="Удалить запись">🗑️</button>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            window.loadHistory = function(index) {
+                const history = JSON.parse(localStorage.getItem('aquablade_history') || '[]');
+                const data = history[index];
+                if (!data) return;
+                applyState(data);
+                calc();
+            };
+
+            window.deleteHistoryItem = function(index) {
+                let history = JSON.parse(localStorage.getItem('aquablade_history') || '[]');
+                if (index >= 0 && index < history.length) {
+                    history.splice(index, 1);
+                    localStorage.setItem('aquablade_history', JSON.stringify(history));
+                    renderHistoryList();
+                }
+            };
+
+            // ─── Экспорт текущего расчёта в JSON-файл ─────────────────
+            window.exportAsJSON = function() {
+                const data = gatherCurrentState();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'aquablade_raschet_' + new Date().toISOString().slice(0,10) + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // ─── Экспорт всей истории в JSON ──────────────────────────
+            window.exportHistoryAsJSON = function() {
+                const history = JSON.parse(localStorage.getItem('aquablade_history') || '[]');
+                const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'aquablade_history_' + new Date().toISOString().slice(0,10) + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // ─── Импорт расчёта из JSON-файла ─────────────────────────
+            window.importJSON = function(input) {
+                if (!input.files[0]) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        applyState(data);
+                        calc();
+                        alert('✅ Расчёт успешно загружен из файла!');
+                    } catch (err) {
+                        alert('❌ Ошибка при чтении файла. Убедитесь, что это корректный JSON-файл.');
+                    }
+                };
+                reader.readAsText(input.files[0]);
+                input.value = ''; // сброс, чтобы можно было повторно выбрать тот же файл
+            };
+
+            // ─── ГЕОМЕТРИЯ DXF (без изменений) ──────────────────────────
+            const D2R = Math.PI / 180;
+            const dist = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+            function segBulge(x1, y1, x2, y2, b) {
+                if (Math.abs(b) < 1e-10) return dist(x1, y1, x2, y2);
+                const chord = dist(x1, y1, x2, y2);
+                if (chord < 1e-12) return 0;
+                const delta = 4 * Math.atan(Math.abs(b));
+                return (chord / (2 * Math.sin(delta / 2))) * delta;
+            }
+
+            function arcLen(r, a0, a1) { let s = a1 - a0; if (s <= 0) s += 360; return r * s * D2R; }
+
+            function plLen(vx, vy, vb, closed) {
+                let L = 0;
+                for (let i = 0; i + 1 < vx.length; i++) L += segBulge(vx[i], vy[i], vx[i + 1], vy[i + 1], vb ? vb[i] || 0 : 0);
+                if (closed && vx.length > 1) { const n = vx.length - 1;
+                    L += segBulge(vx[n], vy[n], vx[0], vy[0], vb ? vb[n] || 0 : 0); }
+                return L;
+            }
+
+            function parseDXF(text) {
+                const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+                const T = [];
+                for (let i = 0; i + 1 < lines.length; i += 2) {
+                    const c = parseInt(lines[i].trim(), 10),
+                        v = lines[i + 1].trim();
+                    if (!isNaN(c)) T.push([c, v]);
+                }
+                let i = 0;
+                const eof = () => i >= T.length,
+                    nxt = () => T[i++];
+
+                function seek(name) {
+                    while (!eof()) { const [c, v] = nxt(); if (c === 0 && v === 'SECTION') { const [c2, v2] = nxt(); if (c2 === 2 && v2 === name) return true } }
+                    return false;
+                }
+                const s0 = i;
+                let insunits = null;
+                if (seek('HEADER')) { while (!eof()) { const [c, v] = nxt(); if (c === 0 && v === 'ENDSEC') break; if (c === 9 && v === '$INSUNITS') { const [, v2] = nxt();
+                        insunits = parseInt(v2, 10); } } }
+                i = s0;
+                if (!seek('ENTITIES')) return null;
+                const es = i;
+                const entities = [];
+                let cur = null;
+                const flush = () => { if (cur) entities.push(cur);
+                    cur = null; };
+                while (!eof()) {
+                    const [c, v] = T[i];
+                    if (c === 0) { flush();
+                        i++; if (v === 'ENDSEC' || v === 'EOF') break;
+                        cur = { type: v, layer: '0', x1: 0, y1: 0, x2: 0, y2: 0, r: 0, startAngle: 0, endAngle: 0, flags: 0 }; } else { i++; if (!cur) continue;
+                        const f = parseFloat(v) || 0; if (c === 8) cur.layer = v; if (c === 10) cur.x1 = f; if (c === 20) cur.y1 = f; if (c === 11) cur.x2 = f; if (c === 21) cur.y2 = f; if (c === 40) cur.r = f; if (c === 50) cur.startAngle = f; if (c === 51) cur.endAngle = f; if (c === 70) cur.flags = parseInt(v, 10) || 0; }
+                }
+                i = es;
+                const lwpolys = [];
+                let lw = null,
+                    lpx = null,
+                    lpy = null,
+                    lpb = 0;
+                const flushLv = () => { if (lpx !== null && lw) { lw.vx.push(lpx);
+                        lw.vy.push(lpy || 0);
+                        lw.vb.push(lpb); }
+                    lpx = null;
+                    lpy = null;
+                    lpb = 0; };
+                while (!eof()) {
+                    const [c, v] = T[i++];
+                    if (c === 0) { flushLv(); if (lw) lwpolys.push(lw);
+                        lw = null; if (v === 'ENDSEC' || v === 'EOF') break; if (v === 'LWPOLYLINE') lw = { vx: [], vy: [], vb: [], flags: 0, layer: '0' }; } else if (lw) { if (c === 8) lw.layer = v; if (c === 70) lw.flags = parseInt(v, 10) || 0; if (c === 10) { flushLv();
+                        lpx = parseFloat(v) || 0; } if (c === 20) lpy = parseFloat(v) || 0; if (c === 42) lpb = parseFloat(v) || 0; }
+                }
+                i = es;
+                const polys = [],
+                    polyByH = {};
+                let pl = null,
+                    inPl = false;
+                while (!eof()) {
+                    const [c, v] = T[i++];
+                    if (c === 0) { if (v === 'ENDSEC' || v === 'EOF') break; if (v === 'POLYLINE') { pl = { vx: [], vy: [], vb: [], flags: 0, layer: '0', h: '__' + polys.length };
+                            inPl = true; } else if (v === 'SEQEND' && inPl) { polys.push(pl);
+                            polyByH[pl.h] = pl;
+                            pl = null;
+                            inPl = false; } else if (v !== 'VERTEX') { inPl = false;
+                        pl = null; } } else if (pl) { if (c === 5) pl.h = v; if (c === 8) pl.layer = v; if (c === 70) pl.flags = parseInt(v, 10) || 0; }
+                }
+                for (const p of polys) { polyByH[p.h] = p; }
+                i = es;
+                let cph = null,
+                    vtx = false,
+                    pvx = null,
+                    pvy = null,
+                    pvb = 0;
+                const flushPv = () => { if (vtx && pvx !== null && cph && polyByH[cph]) { const p = polyByH[cph];
+                        p.vx.push(pvx);
+                        p.vy.push(pvy || 0);
+                        p.vb.push(pvb); }
+                    vtx = false;
+                    pvx = null;
+                    pvy = null;
+                    pvb = 0; };
+                while (!eof()) {
+                    const [c, v] = T[i++];
+                    if (c === 0) { flushPv(); if (v === 'ENDSEC' || v === 'EOF') break; if (v === 'VERTEX') vtx = true; if (v === 'SEQEND') cph = null; } else { if (c === 5 && polyByH[v]) cph = v; if (vtx) { if (c === 10) pvx = parseFloat(v) || 0; if (c === 20) pvy = parseFloat(v) || 0; if (c === 42) pvb = parseFloat(v) || 0; } }
+                }
+                return { entities, lwpolys, polylines: polys, insunits };
+            }
+
+            function detectChains(entities) {
+                const EPS = 1e-3;
+                const key = (x, y) => Math.round(x / EPS) + ',' + Math.round(y / EPS);
+                const segs = [];
+                for (const e of entities) {
+                    if (e.type === 'LINE') { segs.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2, len: dist(e.x1, e.y1, e.x2, e.y2) }); } else if (e.type === 'ARC') { const sr = e.startAngle * D2R,
+                            er = e.endAngle * D2R,
+                            cx = e.x1,
+                            cy = e.y1,
+                            r = e.r;
+                        segs.push({ x1: cx + r * Math.cos(sr), y1: cy + r * Math.sin(sr), x2: cx + r * Math.cos(er), y2: cy + r * Math.sin(er), len: arcLen(r, e.startAngle, e.endAngle) }); }
+                }
+                if (!segs.length) return { closedChains: 0, openChains: 0, totalLen: 0, topoClosedLen: 0 };
+                const nodeId = {},
+                    deg = [];
+
+                function gn(x, y) { const k = key(x, y); if (!(k in nodeId)) { nodeId[k] = deg.length;
+                        deg.push(0); } return nodeId[k]; }
+                const edges = [];
+                for (const s of segs) { const n1 = gn(s.x1, s.y1),
+                        n2 = gn(s.x2, s.y2);
+                    deg[n1]++;
+                    deg[n2]++;
+                    edges.push({ n1, n2, len: s.len }); }
+                const par = deg.map((_, i) => i);
+
+                function find(x) { return par[x] === x ? x : (par[x] = find(par[x])); }
+
+                function union(a, b) { par[find(a)] = find(b); }
+                for (const e of edges) union(e.n1, e.n2);
+                const comps = {};
+                for (const e of edges) { const r = find(e.n1); if (!comps[r]) comps[r] = { nodes: new Set(), len: 0 };
+                    comps[r].nodes.add(e.n1);
+                    comps[r].nodes.add(e.n2);
+                    comps[r].len += e.len; }
+                let closed = 0,
+                    open = 0,
+                    totalLen = 0,
+                    closedLen = 0;
+                for (const comp of Object.values(comps)) { const isClosed = [...comp.nodes].every(id => deg[id] === 2); if (isClosed) { closed++;
+                        closedLen += comp.len; } else open++;
+                    totalLen += comp.len; }
+                return { closedChains: closed, openChains: open, totalLen, topoClosedLen: closedLen };
+            }
+
+            function analyzeFull(parsed) {
+                const stats = { LINE: { count: 0, closed: 0, length: 0 }, CIRCLE: { count: 0, closed: 0, length: 0 },
+                    ARC: { count: 0, closed: 0, length: 0 }, LWPOLYLINE: { count: 0, closed: 0, length: 0 },
+                    POLYLINE: { count: 0, closed: 0, length: 0 }, ELLIPSE: { count: 0, closed: 0, length: 0 },
+                    SPLINE: { count: 0, closed: 0, length: 0 } };
+                const skipTypes = new Set(['INSERT', 'TEXT', 'MTEXT', 'DIMENSION', 'ATTRIB', 'ATTDEF', 'VIEWPORT', 'POINT', 'SOLID', 'TRACE', '3DFACE', 'HATCH', 'IMAGE', 'LEADER', 'TOLERANCE', 'BLOCK', 'ENDBLK', 'SEQEND', 'VERTEX', 'LWPOLYLINE', 'POLYLINE']);
+
+                function addS(type, layer, closed, length) { const t = stats[type] || (stats[type] = { count: 0, closed: 0, length: 0 });
+                    t.count++; if (closed) t.closed++;
+                    t.length += length; }
+                for (const e of parsed.entities) { if (skipTypes.has(e.type)) continue; switch (e.type) { case 'LINE':
+                        addS('LINE', e.layer, false, dist(e.x1, e.y1, e.x2, e.y2)); break; case 'CIRCLE': addS('CIRCLE', e.layer, true, 2 * Math.PI * e.r); break; case 'ARC': addS('ARC', e.layer, false, arcLen(e.r, e.startAngle, e.endAngle)); break; case 'ELLIPSE': { const a = e.r,
+                            ratio = Math.abs(parseFloat(e.endAngle)) || 1,
+                            b = a * ratio; const h = ((a - b) / (a + b)) ** 2;
+                        addS('ELLIPSE', e.layer, true, Math.PI * (a + b) * (1 + 3 * h / (10 + Math.sqrt(4 - 3 * h)))); break; } case 'SPLINE': addS('SPLINE', e.layer, (e.flags & 1) === 1, 0); break; } }
+                for (const lw of parsed.lwpolys) { const cl = (lw.flags & 1) === 1;
+                    addS('LWPOLYLINE', lw.layer, cl, plLen(lw.vx, lw.vy, lw.vb, cl)); }
+                for (const pl of parsed.polylines) { const cl = (pl.flags & 1) === 1;
+                    addS('POLYLINE', pl.layer, cl, plLen(pl.vx, pl.vy, pl.vb, cl)); }
+                const lineArcEnt = parsed.entities.filter(e => e.type === 'LINE' || e.type === 'ARC');
+                const topo = detectChains(lineArcEnt);
+                let expClosed = 0,
+                    totalLen = 0;
+                for (const s of Object.values(stats)) { expClosed += s.closed;
+                    totalLen += s.length; }
+                const totalClosed = expClosed + topo.closedChains;
+                return { totalLen: totalLen, totalClosed: totalClosed, insunits: parsed.insunits };
+            }
+
+            function convertToMeters(length, insunits) { if (insunits === 4 || insunits === 14) return length / 1000; if (insunits === 5) return length / 100; if (insunits === 6) return length; if (insunits === 1) return length * 0.0254; return length / 1000; }
+
+            window.handleDXF = async function(input) { if (!input.files[0]) return; try { const text = await input.files[0].text(); const parsed = parseDXF(text); if (!parsed) throw new Error('Не удалось распознать DXF.'); const analysis = analyzeFull(parsed); const lenMeters = convertToMeters(analysis.totalLen, analysis.insunits);
+                document.getElementById('lenV').value = lenMeters.toFixed(3);
+                document.getElementById('lenR').value = lenMeters;
+                document.getElementById('pierceV').value = analysis.totalClosed;
+                document.getElementById('pierceR').value = analysis.totalClosed;
+                document.getElementById('dxfZone').classList.add('loaded');
+                calc(); } catch (e) { alert('Ошибка обработки DXF: ' + e.message); } };
+
+            // ─── ОСНОВНОЙ РАСЧЁТ ───────────────────────────────────────
+            window.calc = function() {
+                const val = (id) => parseFloat(document.getElementById(id).value) || 0;
+                const thick = val('thickR'),
+                    matK = val('mat');
+                const spdRange = document.getElementById('spdR'),
+                    sndRange = document.getElementById('sndR');
+
+                if (!document.getElementById('manSpd').checked) {
+                    let s = 1500 / (matK * Math.pow(thick, 1.1));
+                    s = Math.min(2500, Math.max(10, s));
+                    spdRange.value = Math.round(s);
+                    document.getElementById('spdDisp').innerText = Math.round(s);
+                }
+                if (!document.getElementById('manSnd').checked) {
+                    let meshK = parseFloat(document.getElementById('sandMesh').value);
+                    let f = (260 + matK * 70 + thick * 1.6) * meshK;
+                    sndRange.value = Math.round(f);
+                    document.getElementById('sndDisp').innerText = Math.round(f);
+                }
+
+                const len = val('lenV'),
+                    pierce = val('pierceV'),
+                    qty = val('qtyV');
+                const spd = val('spdR'),
+                    sndFlow = val('sndR'),
+                    sandP = val('sandP');
+                const salary = val('salary'),
+                    overK = val('overR') / 100;
+                const profitRate = val('profitR') / 100;
+
+                const timeMin = ((len * 1000 / spd) + pierce * 0.6) * qty;
+                const sandKg = timeMin * sndFlow / 1000;
+                const costSand = sandKg * sandP;
+                const costFot = (timeMin / 60) * (salary * 1.5 / 150);
+                const costOver = (costSand + costFot) * overK;
+                const baseTotal = costSand + costFot + costOver;
+
+                const autoDisc = document.getElementById('autoDisc').checked;
+                const discInput = document.getElementById('discVal');
+                let discRate = 0;
+                if (autoDisc) {
+                    if (timeMin <= 30) { discRate = 0.5; } else if (timeMin <= 60) { discRate = 0.5 * (1 - (timeMin - 30) / 30); } else if (timeMin <= 180) { discRate = 0; } else if (timeMin <= 360) { discRate = -0.15 * (timeMin - 180) / 180; } else { discRate = -0.15; }
+                    discInput.value = (discRate * 100).toFixed(1);
+                } else { discRate = val('discVal') / 100; }
+
+                const discountedBase = baseTotal * (1 + discRate);
+                const profitAmount = discountedBase * profitRate;
+                const baseWithProfit = discountedBase + profitAmount;
+                const vatRate = 0.22;
+                const vat = document.getElementById('useVat').checked ? baseWithProfit * vatRate : 0;
+                const final = baseWithProfit + vat;
+                const discRub = discountedBase - baseTotal;
+
+                document.getElementById('resTime').innerText = formatTime(timeMin);
+                document.getElementById('resSand').innerText = sandKg.toFixed(1) + ' кг';
+                document.getElementById('rowSand').innerText = Math.round(costSand).toLocaleString() + ' ₽';
+                document.getElementById('rowFot').innerText = Math.round(costFot).toLocaleString() + ' ₽';
+                document.getElementById('rowOver').innerText = Math.round(costOver).toLocaleString() + ' ₽';
+                document.getElementById('rowDisc').innerText = Math.round(discRub).toLocaleString() + ' ₽';
+                document.getElementById('rowProfit').innerText = Math.round(profitAmount).toLocaleString() + ' ₽';
+                document.getElementById('rowVat').innerText = Math.round(vat).toLocaleString() + ' ₽';
+                document.getElementById('resTotal').innerText = Math.round(final).toLocaleString() + ' ₽';
+                document.getElementById('resPerMeter').innerText = Math.round(final / (len * qty || 1)).toLocaleString() + ' ₽';
+
+                const sumForPerc = final || 1;
+                const pSandVal = Math.round(costSand / sumForPerc * 100);
+                const pFotVal = Math.round(costFot / sumForPerc * 100);
+                const pOverVal = Math.round(costOver / sumForPerc * 100);
+                const pDiscVal = Math.round(Math.abs(discRub) / sumForPerc * 100);
+                const pProfitVal = Math.round(profitAmount / sumForPerc * 100);
+                const pVatVal = Math.round(vat / sumForPerc * 100);
+
+                document.getElementById('pSand').innerText = pSandVal + '%';
+                document.getElementById('pFot').innerText = pFotVal + '%';
+                document.getElementById('pOver').innerText = pOverVal + '%';
+                document.getElementById('pDisc').innerText = pDiscVal + '%';
+                document.getElementById('pDisc').style.color = discRub < 0 ? '#10b981' : '#ef4444';
+                document.getElementById('pProfit').innerText = pProfitVal + '%';
+                document.getElementById('pVat').innerText = pVatVal + '%';
+                document.getElementById('vatStatus').innerText = document.getElementById('useVat').checked ? 'ИТОГО К ОПЛАТЕ (с НДС 22%)' : 'ИТОГО К ОПЛАТЕ (без НДС)';
+
+                // Обновление bar chart
+                document.getElementById('barSand').style.width = pSandVal + '%';
+                document.getElementById('barFot').style.width = pFotVal + '%';
+                document.getElementById('barOver').style.width = pOverVal + '%';
+                document.getElementById('barDisc').style.width = pDiscVal + '%';
+                document.getElementById('barProfit').style.width = pProfitVal + '%';
+                document.getElementById('barVat').style.width = pVatVal + '%';
+
+                // Автосохранение последнего состояния
+                const lastState = gatherCurrentState();
+                localStorage.setItem('aquablade_lastState', JSON.stringify(lastState));
+            };
+
+            function formatTime(minutes) { if (minutes <= 720) return minutes.toFixed(1) + ' мин'; if (minutes <= 2160) return (minutes / 60).toFixed(1) + ' ч'; return (minutes / 1440).toFixed(1) + ' дн'; }
+
+            // ─── ПЕЧАТЬ КП ────────────────────────────────────────────
+            window.prepareAndPrint = function() { const now = new Date();
+                document.getElementById('kpDate').innerText = 'от ' + now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                document.getElementById('kpNum').innerText = 'AB-' + now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '-' + Math.floor(Math.random() * 900 + 100); const mat = document.getElementById('mat').options[document.getElementById('mat').selectedIndex].text; const thick = parseFloat(document.getElementById('thickVal').value).toFixed(1); const vatIncluded = document.getElementById('useVat').checked; const salary = parseFloat(document.getElementById('salary').value) || 0; const overK = parseFloat(document.getElementById('overR').value) / 100; const len = parseFloat(document.getElementById('lenV').value) || 0; const pierce = parseFloat(document.getElementById('pierceV').value) || 0; const qty = parseFloat(document.getElementById('qtyV').value) || 0; const spd = parseFloat(document.getElementById('spdR').value) || 0; const sndFlow = parseFloat(document.getElementById('sndR').value) || 0; const sandP = parseFloat(document.getElementById('sandP').value) || 0; const matK = parseFloat(document.getElementById('mat').value) || 0; const profitRate = parseFloat(document.getElementById('profitR').value) / 100; const timeMin = ((len * 1000 / spd) + pierce * 0.6) * qty; const sandKg = timeMin * sndFlow / 1000; const costSand = sandKg * sandP; const costFot = (timeMin / 60) * (salary * 1.5 / 150); const costOver = (costSand + costFot) * overK; const baseTotal = costSand + costFot + costOver; const autoDisc = document.getElementById('autoDisc').checked; let discRate = 0; if (autoDisc) { if (timeMin <= 30) discRate = 0.5; else if (timeMin <= 60) discRate = 0.5 * (1 - (timeMin - 30) / 30); else if (timeMin <= 180) discRate = 0; else if (timeMin <= 360) discRate = -0.15 * (timeMin - 180) / 180; else discRate = -0.15; } else { discRate = parseFloat(document.getElementById('discVal').value) / 100 || 0; } const discountedBase = baseTotal * (1 + discRate); const profitAmount = discountedBase * profitRate; const baseWithProfit = discountedBase + profitAmount; const vat = vatIncluded ? baseWithProfit * 0.22 : 0; const final = baseWithProfit + vat; const formatMoney = (n) => Math.round(n).toLocaleString() + ' ₽';
+                document.getElementById('kpBody').innerHTML = `
+            <tr><td>Материал</td><td>${mat}</td></tr>
+            <tr><td>Толщина</td><td>${thick} мм</td></tr>
+            <tr><td>Стоимость без НДС (с прибылью)</td><td>${formatMoney(baseWithProfit)}</td></tr>
+            <tr><td>НДС (22%)</td><td>${formatMoney(vat)}</td></tr>
+          `;
+                document.getElementById('kpTotal').innerText = 'ИТОГО К ОПЛАТЕ: ' + formatMoney(final); const printBlock = document.getElementById('print-report');
+                printBlock.style.display = 'block';
+                printBlock.style.visibility = 'visible';
+                printBlock.style.opacity = '1';
+                printBlock.style.position = 'relative';
+                printBlock.style.zIndex = '1';
+                printBlock.style.pointerEvents = 'auto';
+                setTimeout(() => { window.print();
+                    setTimeout(() => { printBlock.style.display = 'none';
+                        printBlock.style.visibility = 'hidden';
+                        printBlock.style.opacity = '0';
+                        printBlock.style.position = 'absolute';
+                        printBlock.style.zIndex = '-1';
+                        printBlock.style.pointerEvents = 'none'; }, 500); }, 300); };
+
+            // ─── Восстановление последнего состояния при загрузке ─────
+            window.addEventListener('DOMContentLoaded', () => {
+                const saved = localStorage.getItem('aquablade_lastState');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        applyState(data);
+                    } catch (e) {}
+                }
+                toggleDiscountMode();
+                calc();
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PressFlow Pro v4.3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        
+        body { 
+            background-color: #f8fafc; 
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 20px;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            width: 24px; height: 24px; background: #2563eb; cursor: pointer;
+            border-radius: 50%; appearance: none; border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .dashboard-height { height: 580px; }
+    </style>
+</head>
+<body>
+    <div class="max-w-[1600px] mx-auto">
+        
+        <header class="mb-5 px-2">
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">Press<span class="text-blue-600">Flow</span></h1>
+            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Система оптимизации прессования</p>
+        </header>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+            
+            <!-- 1. ЛЕВАЯ ПАНЕЛЬ -->
+            <div class="col-span-3 flex flex-col gap-4 dashboard-height">
+                <div class="card p-5 flex flex-col gap-5 flex-1">
+                    <section>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-2">Марка клея</label>
+                        <select id="gluePreset" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="360">Клей 200/90</option>
+                            <option value="270">Клей 200/50</option>
+                            <option value="210">Клей 200/30</option>
+                            <option value="custom">-- Ручной ввод --</option>
+                        </select>
+                    </section>
+
+                    <section>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-2">База (20°C, мин)</label>
+                        <input type="number" id="baseTimeInput" value="360" class="w-full p-2 bg-blue-50/50 border border-blue-100 rounded-lg text-lg font-bold text-blue-800 mono">
+                    </section>
+
+                    <section class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase block mb-1">Температура плиты</label>
+                        <div id="tempValue" class="text-6xl font-black text-blue-600 mono mb-3 tracking-tighter">25°C</div>
+                        <input type="range" id="tempRange" min="15" max="80" value="25" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </section>
+                </div>
+
+                <!-- ИТОГОВОЕ ВРЕМЯ С ИКОНКОЙ -->
+                <div class="card p-6 bg-blue-600 text-white shadow-xl shadow-blue-100 flex flex-col items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Итоговое время</p>
+                    <div id="timeResult" class="text-7xl font-black mono tracking-tighter leading-none">--</div>
+                    <p class="text-xs font-bold opacity-70 mt-3 uppercase">Минут прессования</p>
+                </div>
+            </div>
+
+            <!-- 2. ЦЕНТРАЛЬНАЯ ПАНЕЛЬ -->
+            <div class="col-span-7 flex flex-col gap-4 dashboard-height">
+                <!-- ГРАФИК -->
+                <div class="card p-6 flex-1 flex flex-col overflow-hidden">
+                  <h2 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-wider">Зависимость времени от температуры</h2>
+                  <div class="flex-1 relative">
+                    <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- НИЖНЯЯ ПАНЕЛЬ -->
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- Рекомендация (ВЕРНУЛ ВИД С ИКОНКОЙ) -->
+                    <div id="optimumResult" class="card p-4 bg-emerald-50 border-emerald-100 flex items-center gap-4">
+                        <div class="bg-emerald-500 text-white p-2.5 rounded-lg shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase">Рекомендуемый режим:</p>
+                            <p class="text-xl font-black text-emerald-900 tracking-tight leading-none mt-1"><span id="optTemp">--</span>°C / <span id="optTime">--</span> м.</p>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка С ИКОНКОЙ -->
+                    <button id="calcOptimum" class="card bg-slate-900 hover:bg-blue-600 text-white p-4 font-extrabold text-sm transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 uppercase tracking-wider group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        Подобрать режим
+                    </button>
+
+                    <!-- Справка по клею С ИКОНКАМИ -->
+                    <div class="card p-4 bg-slate-100 border-slate-200 flex justify-around items-center">
+                        <div class="flex flex-col items-center">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">t жизни</p>
+                            </div>
+                            <p id="tJiz" class="text-xl font-black mono text-slate-700">80</p>
+                        </div>
+                        <div class="h-8 w-px bg-slate-300"></div>
+                        <div class="flex flex-col items-center">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">t откр</p>
+                            </div>
+                            <p id="tOtkr" class="text-xl font-black mono text-slate-700">120</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ТАБЛИЦА -->
+            <div class="col-span-2">
+                <div class="card dashboard-height flex flex-col overflow-hidden">
+                    <div class="p-3 border-b border-slate-100 bg-slate-50 text-center text-xs font-black text-slate-400 uppercase">Температура --- Время</div>
+                    <div class="flex-1 overflow-y-auto custom-scroll" id="tableContainer">
+                        <table class="w-full border-collapse text-center">
+                            <tbody id="tableBody" class="text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const tempRange = document.getElementById('tempRange');
+        const tempValueDisplay = document.getElementById('tempValue');
+        const baseTimeInput = document.getElementById('baseTimeInput');
+        const gluePreset = document.getElementById('gluePreset');
+        const timeDisplay = document.getElementById('timeResult');
+        const tableBody = document.getElementById('tableBody');
+        const tableContainer = document.getElementById('tableContainer');
+        const btnOptimum = document.getElementById('calcOptimum');
+        const tJizDisplay = document.getElementById('tJiz');
+        const tOtkrDisplay = document.getElementById('tOtkr');
+
+        const glueData = {
+            "360": { tJiz: 80, tOtkr: 120 },
+            "270": { tJiz: 50, tOtkr: 90 },
+            "210": { tJiz: 20, tOtkr: 60 },
+            "custom": { tJiz: "-", tOtkr: "-" }
+        };
+        
+        let chart = null;
+
+        function calculateFactor(temp) { return 408.51 * Math.pow(temp, -2.006); }
+
+        function updateUI() {
+            const T = parseInt(tempRange.value);
+            const baseMin = parseFloat(baseTimeInput.value) || 0;
+            const factor = calculateFactor(T);
+            const result = Math.round(baseMin * factor);
+            
+            tempValueDisplay.textContent = T + '°C';
+            timeDisplay.textContent = result;
+
+            if (chart) updateChart(T, baseMin);
+            renderTable(baseMin);
+            updateSpecs();
+        }
+
+        function updateSpecs() {
+            const preset = gluePreset.value;
+            tJizDisplay.textContent = glueData[preset].tJiz;
+            tOtkrDisplay.textContent = glueData[preset].tOtkr;
+        }
+
+        btnOptimum.onclick = function() {
+            const baseMin = parseFloat(baseTimeInput.value) || 0;
+            let foundT = 15;
+            for (let t = 15; t < 80; t++) {
+                const gain = (baseMin * calculateFactor(t)) - (baseMin * calculateFactor(t + 1));
+                if (gain < 0.7) { foundT = t; break; }
+            }
+            tempRange.value = foundT;
+            updateUI();
+            document.getElementById('optTemp').textContent = foundT;
+            document.getElementById('optTime').textContent = Math.round(baseMin * calculateFactor(foundT));
+        };
+
+        gluePreset.onchange = function() {
+            if (this.value !== 'custom') baseTimeInput.value = this.value;
+            updateUI();
+        };
+
+        function renderTable(baseMin) {
+            const currentT = parseInt(tempRange.value);
+            let html = '';
+            for (let t = 15; t <= 80; t++) {
+                const f = calculateFactor(t);
+                const isSel = t === currentT;
+                const time = Math.round(baseMin * f);
+                html += `
+                    <tr id="row-${t}" class="transition-colors ${isSel ? 'bg-blue-600 text-white' : 'hover:bg-slate-50 border-b border-slate-50'}">
+                        <td class="pl-4 py-2 font-black mono text-base">${t}°</td>
+                        <td class="pr-4 py-2 text-right font-bold mono text-base ${isSel ? '' : 'text-blue-700'}">${time}</td>
+                    </tr>`;
+            }
+            tableBody.innerHTML = html;
+            const row = document.getElementById(`row-${currentT}`);
+            if (row) tableContainer.scrollTop = row.offsetTop - tableContainer.offsetHeight / 2;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#2563eb', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 3 }]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { 
+                            ticks: { font: { size: 14, weight: 'bold', family: 'Inter' }, color: '#94a3b8' },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { 
+                            ticks: { font: { size: 14, weight: 'bold', family: 'Inter' }, color: '#94a3b8' },
+                            grid: { color: '#f1f5f9' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(currentT, baseMin) {
+            const labels = []; const data = [];
+            for (let t = 15; t <= 80; t++) { labels.push(t); data.push(Math.round(baseMin * calculateFactor(t))); }
+            const gradient = chart.ctx.createLinearGradient(0, 0, 800, 0);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.15)');
+            gradient.addColorStop(0.4, 'rgba(245, 158, 11, 0.15)');
+            gradient.addColorStop(0.7, 'rgba(239, 68, 68, 0.1)');
+            chart.data.datasets[0].backgroundColor = gradient;
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.data.datasets[0].pointRadius = labels.map(l => l == currentT ? 10 : 0);
+            chart.data.datasets[0].pointBackgroundColor = '#1e293b';
+            chart.update('none');
+        }
+
+        tempRange.oninput = updateUI;
+        baseTimeInput.oninput = updateUI;
+        window.onload = () => { initChart(); updateUI(); };
+    </script>
+</body>
+</html>
