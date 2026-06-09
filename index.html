@@ -73,9 +73,7 @@
 <body>
 
     <div class="top-nav">
-        <button onclick="switchTab('briket', this)" class="nav-btn active">
-            <i data-lucide="layers" class="w-4 h-4"></i><span>BriketMaster</span>
-        </button>
+        <button onclick="switchTab('briket', this)" class="nav-btn active"><em data-lucide="layers" class="w-4 h-4"></em><span>Брикеты</span></button>
         <button onclick="switchTab('cnc', this)" class="nav-btn">
             <i data-lucide="cpu" class="w-4 h-4"></i><span>CoolSim</span>
         </button>
@@ -86,7 +84,10 @@
             <i data-lucide="gauge" class="w-4 h-4"></i><span>PressMatrix</span>
         </button>
         <button onclick="switchTab('aqua', this)" class="nav-btn">
-            <i data-lucide="droplets" class="w-4 h-4"></i><span>AquaBlade</span>
+            <i data-lucide="droplets" class="w-4 h-4"></i><span>Гидрорезка</span>
+        </button>
+        <button onclick="switchTab('primecost', this)" class="nav-btn">
+            <i data-lucide="calculator" class="w-4 h-4"></i><span>Себестоимость</span>
         </button>
     </div>
 
@@ -106,17 +107,18 @@
         <div id="aqua" class="tab-content h-full hidden">
             <iframe src="AquaBlade.html"></iframe>
         </div>
+        <div id="primecost" class="tab-content h-full hidden">
+            <iframe src="PrimeCost.html"></iframe>
+        </div>
     </main>
 
     <footer>
         <div class="auth-info">
-            <div class="digital-sig">ЗСМК ТехноХаб v1.3</div>
+            <div class="digital-sig">ЗСМК ТехноХаб v1.4</div>
             <div><span class="font-bold text-slate-400">АВТОР:</span> Фадеев А.Ю.</div>
             <div><span class="font-bold text-slate-400">ДОЛЖНОСТЬ:</span> Главный технолог ООО «ЗСМК»</div>
         </div>
-        <div class="text-[10px] font-mono text-slate-600 uppercase">
-            System Stable | 15.05.2026
-        </div>
+        <div class="text-[10px] font-mono text-slate-600 uppercase"> System Stable | 09.06.2026 </div>
     </footer>
 
     <script>
