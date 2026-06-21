@@ -201,7 +201,7 @@
             </div>
             <div class="input-row">
                 <input type="number" id="bendLength" value="100" step="1" min="10" max="4150">
-                <input type="range" id="bendLengthSlider" min="50" max="4150" step="10" value="100">
+                <input type="range" id="bendLengthSlider" min="50" max="4150" step="50" value="100">
             </div>
         </div>
 
@@ -509,9 +509,9 @@
                         </div>
                     </div>
                     <div class="input-row">
-                        <input type="number" id="${id}" value="${val}" step="0.1" min="6.5" max="2000" style="flex:0 0 85px; text-align:center;">
+                        <input type="number" id="${id}" value="${val}" step="0.1" min="6.0" max="200" style="flex:0 0 85px; text-align:center;">
                         <span class="inner-indicator" id="inner_${id}"></span>
-                        <input type="range" id="${id}Slider" min="6.5" max="300" step="1" value="${val}">
+                        <input type="range" id="${id}Slider" min="6.0" max="200" step="1" value="${val}">
                     </div>
                 </div>
             `;
@@ -550,7 +550,7 @@
                         <div class="input-row">
                             <input type="number" id="web" value="100" step="0.1" min="10" max="2000" style="flex:0 0 85px; text-align:center;">
                             <span class="inner-indicator" id="inner_web"></span>
-                            <input type="range" id="webSlider" min="10" max="300" step="1" value="100">
+                            <input type="range" id="webSlider" min="10" max="200" step="1" value="100">
                         </div>
                     </div>` +
                     angleHtml('angle1', 90, 'angle2') + angleHtml('angle2', 90, 'angle1');
@@ -566,7 +566,7 @@
                         <div class="input-row">
                             <input type="number" id="middle" value="80" step="0.1" min="10" max="2000" style="flex:0 0 85px; text-align:center;">
                             <span class="inner-indicator" id="inner_middle"></span>
-                            <input type="range" id="middleSlider" min="10" max="300" step="1" value="80">
+                            <input type="range" id="middleSlider" min="10" max="200" step="1" value="80">
                         </div>
                     </div>` +
                     angleHtml('angle1', 90, 'angle2') + angleHtml('angle2', 90, 'angle1');
