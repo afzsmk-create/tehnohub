@@ -82,7 +82,7 @@
         .param-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; background: rgba(255,255,255,0.03); padding: 0.45rem 0.8rem; border-radius: 0.7rem; border: 1px solid transparent; }
         .param-icon { font-size: 1.1rem; opacity: 0.8; }
         .param-value { font-size: 1.1rem; font-weight: 600; color: #fff; }
-        .param-label { font-size: 0.6rem; text-transform: uppercase; color: #8b9bb5; }
+        .param-label { font-size: 0.7rem; text-transform: uppercase; color: #8b9bb5; }
         
         #resLength {
             color: #4ade80 !important;
@@ -227,6 +227,13 @@
                 </div>
             </div>
             <div class="param-item">
+                <span class="param-label">Усилие пресса</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🏋️‍♂️</span>
+                    <span class="param-value" id="resForce">0.0 т</span>
+                </div>
+            </div>
+            <div class="param-item">
                 <span class="param-label">Радиус Ri</span>
                 <div style="display:flex;align-items:center;gap:0.3rem;">
                     <span class="param-icon">⭕</span>
@@ -252,13 +259,6 @@
                 <div style="display:flex;align-items:center;gap:0.3rem;">
                     <span class="param-icon">📋</span>
                     <span class="param-value" id="resLength">217.4</span>
-                </div>
-            </div>
-            <div class="param-item">
-                <span class="param-label">Усилие пресса</span>
-                <div style="display:flex;align-items:center;gap:0.3rem;">
-                    <span class="param-icon">🏋️‍♂️</span>
-                    <span class="param-value" id="resForce">0.0 т</span>
                 </div>
             </div>
         </div>
@@ -900,23 +900,23 @@
                 const b = bends[0];
                 builder = new PathBuilder(0,0,Math.PI/2);
                 builder.line(Math.max(0,d.leg1-b.OSSB),`L₁=${d.leg1.toFixed(2)}`,20);
-                builder.arc(outerR,b.loadBendDeg,-1);
+                builder.arc(outerR,b.bendAngleDeg,-1);
                 builder.line(Math.max(0,d.leg2-b.OSSB),`L₂=${d.leg2.toFixed(2)}`,20);
             } else if (profile === 'U') {
                 const b1=bends[0], b2=bends[1];
                 builder = new PathBuilder(0,0,Math.PI/2);
                 builder.line(Math.max(0,d.left-b1.OSSB),`L₁=${d.left.toFixed(2)}`,20);
-                builder.arc(outerR,b1.loadBendDeg,-1);
+                builder.arc(outerR,b1.bendAngleDeg,-1);
                 builder.line(Math.max(0,d.web-b1.OSSB-b2.OSSB),`W=${d.web.toFixed(2)}`,20);
-                builder.arc(outerR,b2.loadBendDeg,-1);
+                builder.arc(outerR,b2.bendAngleDeg,-1);
                 builder.line(Math.max(0,d.right-b2.OSSB),`L₂=${d.right.toFixed(2)}`,20);
             } else if (profile === 'Z') {
                 const b1=bends[0], b2=bends[1];
                 builder = new PathBuilder(0,0,0);
                 builder.line(Math.max(0,d.top-b1.OSSB),`Z₁=${d.top.toFixed(2)}`,-20);
-                builder.arc(outerR,b1.loadBendDeg,1);
+                builder.arc(outerR,b1.bendAngleDeg,1);
                 builder.line(Math.max(0,d.mid-b1.OSSB-b2.OSSB),`Z₂=${d.mid.toFixed(2)}`,-20);
-                builder.arc(outerR,b2.loadBendDeg,-1);
+                builder.arc(outerR,b2.bendAngleDeg,-1);
                 builder.line(Math.max(0,d.bot-b2.OSSB),`Z₃=${d.bot.toFixed(2)}`,20);
             }
 
