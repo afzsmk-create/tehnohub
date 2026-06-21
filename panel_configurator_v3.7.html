@@ -1,0 +1,2882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Configurator v3.05</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+    --bg-sidebar: #ffffff;
+    --bg-sidebar-header: #1e293b;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e1e6eb;
+    --border-strong: #cbd5e1;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --input-bg: #ffffff;
+    --section-bg: #f8fafc;
+    --hud-bg: rgba(255,255,255,0.94);
+    --hud-border: rgba(226,232,240,0.8);
+    --success: #10b981;
+    --success-soft: #d1fae5;
+    --success-text: #065f46;
+    --warning: #f59e0b;
+    --warning-soft: #fef3c7;
+    --warning-text: #92400e;
+    --danger: #ef4444;
+    --danger-soft: #fee2e2;
+    --danger-text: #991b1b;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+}
+[data-theme="dark"] {
+    --bg-sidebar: #1a1d23;
+    --bg-sidebar-header: #0f1115;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #2d333b;
+    --border-strong: #3d444d;
+    --accent: #3b82f6;
+    --accent-soft: #1e293b;
+    --input-bg: #242830;
+    --section-bg: #20242b;
+    --hud-bg: rgba(26,29,35,0.94);
+    --hud-border: rgba(45,51,59,0.8);
+    --success-soft: #064e3b;
+    --success-text: #6ee7b7;
+    --warning-soft: #78350f;
+    --warning-text: #fcd34d;
+    --danger-soft: #7f1d1d;
+    --danger-text: #fca5a5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { display: flex; background: var(--bg-sidebar); color: var(--text-primary); }
+
+/* SIDEBAR */
+.sidebar {
+    width: 360px; min-width: 360px; max-width: 360px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    height: 100vh; z-index: 10;
+    transition: background 0.3s;
+}
+.sidebar-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-sidebar-header);
+    color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+}
+.sidebar-header h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.3px; }
+.sidebar-header p { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+.theme-toggle {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; width: 30px; height: 30px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+.validation-bar {
+    padding: 7px 14px;
+    background: var(--section-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0; min-height: 32px;
+}
+.validation-bar.ok { color: var(--success-text); }
+.validation-bar.warn { color: var(--warning-text); }
+.validation-bar.danger { color: var(--danger-text); }
+
+.controls-container { padding: 0; overflow-y: auto; flex: 1; min-height: 0; }
+.controls-container::-webkit-scrollbar { width: 5px; }
+.controls-container::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+.acc-section { border-bottom: 1px solid var(--border); }
+.acc-header {
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+    background: var(--bg-sidebar);
+    position: sticky; top: 0; z-index: 2;
+}
+.acc-header:hover { background: var(--section-bg); }
+.acc-icon { font-size: 14px; }
+.acc-title { font-size: 12px; font-weight: 600; color: var(--text-primary); flex: 1; }
+.acc-status { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); }
+.acc-status.active { background: var(--success); }
+.acc-chevron { font-size: 9px; color: var(--text-muted); transition: transform 0.2s; }
+.acc-section.open .acc-chevron { transform: rotate(90deg); }
+.acc-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.acc-section.open .acc-body { max-height: 2000px; }
+.acc-content { padding: 4px 14px 14px; }
+
+.control-group { margin-bottom: 10px; }
+.control-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; gap: 6px; }
+label { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
+.indicator {
+    font-size: 10px; font-weight: 600;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+}
+.input-row { display: flex; gap: 6px; align-items: center; }
+input[type="range"] {
+    flex: 1; height: 4px; background: var(--border); border-radius: 2px;
+    outline: none; -webkit-appearance: none; min-width: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+}
+.num-input {
+    width: 65px; min-width: 65px; height: 26px;
+    padding: 2px 5px; border: 1px solid var(--border);
+    border-radius: 4px; font-size: 11px; text-align: right;
+    color: var(--text-primary); background: var(--input-bg); font-weight: 500;
+}
+.num-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
+select {
+    width: 100%; height: 30px; padding: 0 7px;
+    border: 1px solid var(--border); border-radius: 4px;
+    font-size: 11px; background: var(--input-bg);
+    color: var(--text-primary); outline: none; cursor: pointer;
+}
+.btn-group { display: flex; gap: 3px; width: 100%; }
+.btn-group button {
+    flex: 1; height: 28px; background: var(--section-bg);
+    border: 1px solid var(--border); border-radius: 4px;
+    font-size: 10px; font-weight: 600; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s ease; padding: 0 3px;
+}
+.btn-group button:hover { background: var(--border); }
+.btn-group button.active {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+    transform: scale(1.02);
+}
+.color-picker-wrapper { display: flex; gap: 6px; align-items: center; margin-top: 5px; }
+.color-picker-wrapper input[type="color"] {
+    -webkit-appearance: none; border: none;
+    width: 26px; height: 26px; border-radius: 4px;
+    cursor: pointer; background: none; flex-shrink: 0;
+}
+.color-picker-wrapper input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 4px; }
+.info-note {
+    font-size: 10px; color: var(--text-muted);
+    background: var(--section-bg); padding: 5px 7px;
+    border-radius: 3px; margin-top: 5px; line-height: 1.35;
+    border-left: 2px solid var(--accent);
+}
+
+/* PRESETS */
+.preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.preset-btn {
+    padding: 7px; background: var(--section-bg);
+    border: 1px solid var(--border); border-radius: 5px;
+    cursor: pointer; text-align: left; transition: all 0.15s;
+    position: relative;
+}
+.preset-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.preset-btn.saved { border-color: var(--success); background: var(--success-soft); }
+.preset-name { font-size: 10px; font-weight: 600; color: var(--text-primary); margin-bottom: 1px; }
+.preset-desc { font-size: 9px; color: var(--text-muted); line-height: 1.25; }
+.preset-btn .save-indicator {
+    position: absolute; top: 3px; right: 3px;
+    font-size: 9px; color: var(--success);
+}
+
+/* COMPARE HUD */
+.compare-hud {
+    position: absolute;
+    right: 20px;
+    background: var(--hud-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--hud-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    width: 270px; max-width: calc(100vw - 400px - 40px);
+    box-shadow: var(--shadow-lg);
+    z-index: 5;
+    color: var(--text-primary);
+    font-size: 11px;
+}
+.compare-hud.hidden { display: none; }
+.compare-hud-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    color: var(--text-muted); letter-spacing: 0.5px;
+    margin-bottom: 8px; padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.compare-close {
+    background: transparent; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
+}
+.compare-close:hover { color: var(--text-primary); }
+.compare-slot {
+    padding: 5px 7px; background: var(--section-bg);
+    border-radius: 4px; margin-bottom: 4px;
+    border-left: 3px solid var(--accent);
+}
+.compare-slot.slot-b { border-left-color: var(--success); }
+.compare-slot-label {
+    font-size: 10px; font-weight: 700; color: var(--text-primary);
+    margin-bottom: 1px;
+}
+.compare-slot-desc {
+    font-size: 9px; color: var(--text-secondary); line-height: 1.3;
+}
+.compare-metrics { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.compare-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; }
+.compare-label { color: var(--text-secondary); font-size: 10px; }
+.compare-values { display: flex; gap: 4px; align-items: center; }
+.compare-a { color: var(--text-muted); font-size: 10px; }
+.compare-arrow { color: var(--text-muted); font-size: 10px; }
+.compare-b { color: var(--text-primary); font-weight: 600; font-size: 10px; }
+.compare-delta { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 2px; }
+.compare-delta.better { background: var(--success-soft); color: var(--success-text); }
+.compare-delta.worse { background: var(--danger-soft); color: var(--danger-text); }
+.compare-delta.neutral { background: var(--section-bg); color: var(--text-muted); }
+
+/* STAGE */
+.stage-container {
+    flex: 1; position: relative; height: 100vh;
+    min-width: 0; min-height: 0;
+    background: #111827; overflow: hidden;
+    display: flex; flex-direction: column;
+}
+#canvas3d { display: block; flex: 1; width: 100%; }
+
+.top-reserved {
+    position: absolute; top: 0; left: 0; right: 0; height: 100px;
+    pointer-events: none; z-index: 4;
+}
+
+/* HUD */
+.hud-panel {
+    position: absolute; top: 110px; right: 20px;
+    background: var(--hud-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--hud-border);
+    border-radius: 10px; padding: 12px 14px;
+    width: 270px; max-width: calc(100vw - 400px - 40px);
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto; z-index: 5;
+    color: var(--text-primary);
+}
+.hud-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    color: var(--text-muted); letter-spacing: 0.5px;
+    margin-bottom: 6px; padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.hud-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 5px; font-size: 11px; gap: 6px; flex-wrap: wrap;
+}
+.hud-row.divider { padding-top: 6px; border-top: 1px solid var(--border); margin-top: 3px; }
+.hud-label { color: var(--text-secondary); font-weight: 500; flex: 1; min-width: 0; line-height: 1.3; }
+.hud-value {
+    color: var(--text-primary); font-weight: 700;
+    text-align: right; flex-shrink: 0; line-height: 1.3;
+    word-break: break-word;
+}
+.hud-value.highlight { color: var(--success); font-size: 14px; }
+.hud-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+}
+.hud-badge.green { background: var(--success-soft); color: var(--success-text); }
+.hud-badge.amber { background: var(--warning-soft); color: var(--warning-text); }
+.hud-badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+.hud-badge.green .dot { background: var(--success); }
+.hud-badge.amber .dot { background: var(--warning); }
+
+/* BOTTOM TOOLBAR — стекловидный эффект */
+.bottom-toolbar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 
+        0 -4px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    display: flex; flex-direction: column; gap: 6px;
+    z-index: 6;
+}
+[data-theme="dark"] .bottom-toolbar {
+    background: rgba(10, 15, 25, 0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.toolbar-row {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+}
+.toolbar-row.right { justify-content: flex-end; }
+
+.view-buttons { display: flex; gap: 3px; }
+.view-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; padding: 5px 10px; font-size: 10px; font-weight: 600;
+    border-radius: 14px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 3px;
+}
+.view-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
+.view-btn.active { background: #fff; color: #0f172a; border-color: #fff; }
+
+.rotate-toggle {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; width: 30px; height: 28px; border-radius: 14px;
+    cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.rotate-toggle:hover { color: #fff; background: rgba(255,255,255,0.15); }
+.rotate-toggle.paused { color: #f59e0b; }
+
+.toolbar-divider { width: 1px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 4px; }
+
+.edge-toggle-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; padding: 5px 12px; font-size: 10px; font-weight: 600;
+    border-radius: 14px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+}
+.edge-toggle-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
+.edge-toggle-btn.active {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.edge-toggle-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.layers-dropdown { position: relative; }
+.layers-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; padding: 5px 10px; font-size: 10px; font-weight: 600;
+    border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.layers-btn:hover { color: #fff; }
+.layers-popover {
+    position: absolute; bottom: 36px; left: 0;
+    background: rgba(15,23,42,0.95); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; padding: 8px;
+    min-width: 180px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: none;
+    z-index: 10;
+}
+.layers-popover.open { display: block; }
+.layers-popover label {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 6px; font-size: 11px; color: #e2e8f0;
+    cursor: pointer; border-radius: 4px;
+}
+.layers-popover label:hover { background: rgba(255,255,255,0.08); }
+.layers-popover input { width: 13px; height: 13px; cursor: pointer; }
+.layers-popover .layers-actions {
+    display: flex; gap: 4px; margin-top: 6px; padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.layers-popover .layers-actions button {
+    flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; padding: 4px; font-size: 9px; font-weight: 600;
+    border-radius: 3px; cursor: pointer;
+}
+.layers-popover .layers-actions button:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.explode-control {
+    display: flex; align-items: center; gap: 6px;
+    color: #cbd5e1; font-size: 10px; font-weight: 600;
+}
+.explode-control input[type="range"] {
+    width: 100px; height: 3px; background: rgba(255,255,255,0.2);
+}
+.explode-control input[type="range"]::-webkit-slider-thumb {
+    width: 12px; height: 12px; background: var(--accent);
+}
+.explode-control .explode-val {
+    min-width: 28px; text-align: right; color: #fff;
+}
+
+.assembly-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; padding: 5px 10px; font-size: 10px; font-weight: 600;
+    border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.assembly-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
+
+.light-hud { display: flex; gap: 3px; }
+.light-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #cbd5e1; padding: 5px 12px; font-size: 10px; font-weight: 600;
+    border-radius: 14px; cursor: pointer; transition: all 0.2s;
+}
+.light-btn:hover { color: #fff; }
+.light-btn.active { background: #fff; color: #0f172a; border-color: #fff; }
+
+/* УЛУЧШЕННЫЕ КНОПКИ ИНСТРУМЕНТОВ */
+.action-btn-row { display: flex; gap: 6px; margin-top: 6px; }
+
+.action-btn {
+    flex: 1;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+.action-btn.primary:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    transform: translateY(-1px);
+}
+.action-btn.primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.action-btn.secondary {
+    background: var(--bg-sidebar);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.action-btn.secondary:hover {
+    background: var(--section-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+    transform: translateY(-1px);
+}
+.action-btn.secondary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.action-btn .btn-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.hidden { display: none !important; }
+
+/* PDF TEMPLATE */
+.pdf-template {
+    position: fixed; left: -9999px; top: 0;
+    width: 794px;
+    background: #fff; color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 40px;
+}
+.pdf-template .pdf-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 3px solid #2563eb; padding-bottom: 16px; margin-bottom: 24px;
+}
+.pdf-template .pdf-logo { font-size: 28px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; }
+.pdf-template .pdf-logo span { color: #2563eb; }
+.pdf-template .pdf-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-top: 4px; }
+.pdf-template .pdf-meta { text-align: right; font-size: 11px; color: #64748b; line-height: 1.6; }
+.pdf-template .pdf-meta strong { color: #1e293b; }
+.pdf-template .pdf-section { margin-bottom: 20px; }
+.pdf-template .pdf-section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    color: #2563eb; letter-spacing: 0.5px;
+    margin-bottom: 10px; padding-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.pdf-template .pdf-table {
+    width: 100%; border-collapse: collapse; font-size: 11px;
+}
+.pdf-template .pdf-table th {
+    background: #1e293b; color: #fff;
+    padding: 8px 10px; text-align: left; font-weight: 600;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.pdf-template .pdf-table td {
+    padding: 7px 10px; border-bottom: 1px solid #e2e8f0;
+}
+.pdf-template .pdf-table tr:nth-child(even) td { background: #f8fafc; }
+.pdf-template .pdf-table tr:last-child td { border-bottom: none; }
+.pdf-template .pdf-table .value-cell { text-align: right; font-weight: 600; color: #1e293b; }
+.pdf-template .pdf-table .highlight-cell { color: #2563eb; font-weight: 700; }
+.pdf-template .pdf-drawing {
+    border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 16px; background: #fafbfc;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 180px;
+}
+.pdf-template .pdf-footer {
+    margin-top: 24px; padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; color: #64748b;
+}
+.pdf-template .pdf-qr {
+    width: 80px; height: 80px;
+    border: 1px solid #e2e8f0; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff;
+}
+.pdf-template .pdf-note {
+    font-size: 9px; color: #94a3b8; font-style: italic;
+    margin-top: 6px;
+}
+
+@media (max-width: 1100px) {
+    .sidebar { width: 320px; min-width: 320px; max-width: 320px; }
+    .hud-panel, .compare-hud { width: 240px; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-header">
+        <div>
+            <h1>Конфигуратор панелей</h1>
+            <p>v3.05 • Инженерный инструмент</p>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="Переключить тему">🌙</button>
+    </div>
+
+    <div class="validation-bar ok" id="validationBar">
+        <span id="validationIcon">✅</span>
+        <span id="validationText">Конфигурация оптимальна</span>
+    </div>
+
+    <div class="controls-container">
+
+        <div class="acc-section open">
+            <div class="acc-header">
+                <span class="acc-icon">⚡</span>
+                <span class="acc-title">Готовые решения</span>
+                <span class="acc-chevron">▶</span>
+            </div>
+            <div class="acc-body"><div class="acc-content">
+                <div class="preset-grid" id="presetGrid"></div>
+            </div></div>
+        </div>
+
+        <div class="acc-section open">
+            <div class="acc-header">
+                <span class="acc-icon">📐</span>
+                <span class="acc-title">Габаритные размеры</span>
+                <span class="acc-status active"></span>
+                <span class="acc-chevron">▶</span>
+            </div>
+            <div class="acc-body"><div class="acc-content">
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label>Длина:</label>
+                        <span class="indicator" id="lengthVal">400 мм</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="range" id="lengthSlider" min="100" max="500" step="10" value="400">
+                        <input type="number" id="lengthInput" class="num-input" min="100" max="6000" value="400">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label>Ширина:</label>
+                        <span class="indicator" id="widthVal">300 мм</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="range" id="widthSlider" min="100" max="500" step="10" value="300">
+                        <input type="number" id="widthInput" class="num-input" min="100" max="1500" value="300">
+                    </div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="acc-section">
+            <div class="acc-header">
+                <span class="acc-icon">🎨</span>
+                <span class="acc-title">Лицевой лист</span>
+                <span class="acc-status active"></span>
+                <span class="acc-chevron">▶</span>
+            </div>
+            <div class="acc-body"><div class="acc-content">
+                <div class="control-group">
+                    <label>Материал:</label>
+                    <select id="faceMat">
+                        <option value="aluminum">Алюминий</option>
+                        <option value="galvanized">Оцинкованная сталь</option>
+                        <option value="enameled">Эмалированная сталь</option>
+                        <option value="steel">Нержавеющая сталь</option>
+                        <option value="hpl">HPL Пластик</option>
+                        <option value="ceramic">Керамогранит / Камень</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label>Толщина листа (мм):</label>
+                        <span class="indicator" id="faceThickVal">1.0 мм</span>
+                    </div>
+                    <input type="range" id="faceThickness" min="0.3" max="5.0" step="0.05" value="1.0" style="width:100%;">
+                </div>
+                <div class="control-group hidden" id="faceEnamelGroup">
+                    <div class="control-label-row">
+                        <label>Толщина эмали (слой):</label>
+                        <span class="indicator" id="faceEnamelVal">0.40 мм</span>
+                    </div>
+                    <input type="range" id="faceEnamel" min="0.30" max="0.50" step="0.05" value="0.40" style="width:100%;">
+                    <div class="info-note">Эмаль с 2 сторон. Итого = сталь + 2×эмаль.</div>
+                </div>
+                <div class="control-group hidden" id="faceSSGroup">
+                    <label>Отделка нерж. стали:</label>
+                    <select id="faceSSFinish">
+                        <option value="mirror">BA (Зеркальная)</option>
+                        <option value="brushed">N4 (Шлифованная)</option>
+                        <option value="matte">2B (Матовая)</option>
+                    </select>
+                </div>
+                <div class="control-group" id="faceRalGroup">
+                    <label>Цвет RAL:</label>
+                    <select id="faceRal"></select>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="faceHex" value="#F4F8F4">
+                        <label style="font-size:10px; color:var(--text-muted);">HEX</label>
+                    </div>
+                </div>
+                <div class="control-group hidden" id="faceFinishGroup">
+                    <label>Поверхность:</label>
+                    <div class="btn-group" id="faceFinishBtns">
+                        <button type="button" data-value="matte" class="active">Матовая</button>
+                        <button type="button" data-value="glossy">Глянцевая</button>
+                    </div>
+                </div>
+                <div class="control-group hidden" id="faceDecorGroup">
+                    <label>Архитектурный декор:</label>
+                    <select id="faceDecor"></select>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="acc-section">
+            <div class="acc-header">
+                <span class="acc-icon">🎨</span>
+                <span class="acc-title">Тыльный лист</span>
+                <span class="acc-status active"></span>
+                <span class="acc-chevron">▶</span>
+            </div>
+            <div class="acc-body"><div class="acc-content">
+                <div class="control-group">
+                    <label>Материал:</label>
+                    <select id="backMat">
+                        <option value="aluminum">Алюминий</option>
+                        <option value="galvanized">Оцинкованная сталь</option>
+                        <option value="enameled">Эмалированная сталь</option>
+                        <option value="steel">Нержавеющая сталь</option>
+                        <option value="hpl">HPL Пластик</option>
+                        <option value="ceramic">Керамогранит / Камень</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <label>Толщина листа (мм):</label>
+                        <span class="indicator" id="backThickVal">0.7 мм</span>
+                    </div>
+                    <input type="range" id="backThickness" min="0.3" max="5.0" step="0.05" value="0.7" style="width:100%;">
+                </div>
+                <div class="control-group hidden" id="backEnamelGroup">
+                    <div class="control-label-row">
+                        <label>Толщина эмали (слой):</label>
+                        <span class="indicator" id="backEnamelVal">0.40 мм</span>
+                    </div>
+                    <input type="range" id="backEnamel" min="0.30" max="0.50" step="0.05" value="0.40" style="width:100%;">
+                    <div class="info-note">Эмаль с 2 сторон. Итого = сталь + 2×эмаль.</div>
+                </div>
+                <div class="control-group hidden" id="backSSGroup">
+                    <label>Отделка нерж. стали:</label>
+                    <select id="backSSFinish">
+                        <option value="mirror">BA (Зеркальная)</option>
+                        <option value="brushed">N4 (Шлифованная)</option>
+                        <option value="matte">2B (Матовая)</option>
+                    </select>
+                </div>
+                <div class="control-group" id="backRalGroup">
+                    <label>Цвет RAL:</label>
+                    <select id="backRal"></select>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="backHex" value="#A5A8A6">
+                        <label style="font-size:10px; color:var(--text-muted);">HEX</label>
+                    </div>
+                </div>
+                <div class="control-group hidden" id="backFinishGroup">
+                    <label>Поверхность:</label>
+                    <div class="btn-group" id="backFinishBtns">
+                        <button type="button" data-value="matte" class="active">Матовая</button>
+                        <button type="button" data-value="glossy">Глянцевая</button>
+                    </div>
+                </div>
+                <div class="control-group hidden" id="backDecorGroup">
+                    <label>Архитектурный декор:</label>
+                    <select id="backDecor"></select>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="acc-section">
+            <div class="acc-header">
+                <span class="acc-icon">🧱</span>
+                <span class="acc-title">Сердцевина панели</span>
+                <span class="acc-status active"></span>
+                <span class="acc-chevron">▶</span>
+            </div>
+            <div class="acc-body"><div class="acc-content">
+                <div class="control-group">
+                    <label>Тип заполнения:</label>
+                    <select id="coreType">
+                        <option value="honeycomb">Алюминиевый сотопакет</option>
+                        <option value="sml">СМЛ (Стекломагниевый лист)</option>
+                        <option value="hxp">ХЦП (Хризотилцементная плита)</option>
+                        <option value="mvp">МВП (Минераловатная плита)</option>
+                        <option value="pir">PIR-плита (Пенополиизоцианурат)</option>
+                    </select>
+                    <div class="info-note" id="coreInfo">Алюминиевый сотопакет — легкий жесткий заполнитель.</div>
+                </div>
+                <div id="honeycombParams">
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <label>Толщина ядра (мм):</label>
+                            <span class="indicator" id="coreThickVal">20 мм</span>
+                        </div>
+                        <input type="range" id="coreThickness" min="10" max="100" step="1" value="20" style="width:100%;">
+                    </div>
+                    <div class="control-group">
+                        <label style="display:block; margin-bottom:5px;">Размер ячейки:</label>
+                        <div class="btn-group" id="cellSizeGroup">
+                            <button type="button" data-value="6.3" class="active">6.3</button>
+                            <button type="button" data-value="9.5">9.5</button>
+                            <button type="button" data-value="12.3">12.3</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <label>Толщина фольги (мм):</label>
+                            <span class="indicator" id="foilThickVal">0.05 мм</span>
+                        </div>
+                        <input type="range" id="foilThickness" min="0.03" max="0.10" step="0.01" value="0.05" style="width:100%;">
+                    </div>
+                </div>
+                <div id="solidCoreParams" class="hidden">
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <label>Толщина ядра (мм):</label>
+                            <span class="indicator" id="solidCoreThickVal">8 мм</span>
+                        </div>
+                        <input type="range" id="solidCoreThickness" min="4" max="20" step="1" value="8" style="width:100%;">
+                    </div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="acc-section">
+            <div class="acc-header">
+                <span class="acc-icon">💾</span>
+                <span class="acc-title">Инструменты</span>
+                <span class="acc-chevron">▶</span>
+            </div>
+            <div class="acc-body"><div class="acc-content">
+                <div class="action-btn-row">
+                    <button class="action-btn secondary" id="compareBtn" title="Зафиксировать текущую конфигурацию как вариант A">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M2 12h20"/>
+                        </svg>
+                        <span>Зафиксировать A</span>
+                    </button>
+                    <button class="action-btn secondary hidden" id="compareClear">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                        <span>Сброс</span>
+                    </button>
+                </div>
+                <div class="action-btn-row" style="margin-top:8px;">
+                    <button class="action-btn primary" id="exportPdf" title="Экспорт спецификации в PDF с чертежом">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        <span>Экспорт PDF</span>
+                    </button>
+                    <button class="action-btn secondary" id="exportCsv" title="Экспорт в CSV для Excel">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>Экспорт CSV</span>
+                    </button>
+                </div>
+            </div></div>
+        </div>
+
+    </div>
+</div>
+
+<div class="stage-container">
+    <div class="top-reserved"></div>
+
+    <div class="hud-panel" id="calcHud">
+        <div class="hud-title">
+            <span>Калькулятор панели</span>
+            <span id="hudConfigId" style="font-size:9px; color:var(--text-muted); font-weight:400;"></span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">Общая толщина:</span>
+            <span class="hud-value" id="hudTotalThick">21.70 мм</span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">Площадь:</span>
+            <span class="hud-value" id="hudArea">0.120 м²</span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">Масса (образец / м²):</span>
+            <span class="hud-value" id="hudWeight">0.82 / 6.85 кг</span>
+        </div>
+        <div class="hud-row divider">
+            <span class="hud-label">Пожарный класс:</span>
+            <span class="hud-value" id="hudFire"><span class="hud-badge green"><span class="dot"></span>КМ0 / НГ</span></span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">Теплосопротивление R:</span>
+            <span class="hud-value" id="hudR">0.050 м²·°C/Вт</span>
+        </div>
+        <div class="hud-row divider">
+            <span class="hud-label">Стоимость (за м²):</span>
+            <span class="hud-value highlight" id="hudCost">4 450 ₽</span>
+        </div>
+    </div>
+
+    <div class="compare-hud hidden" id="compareHud">
+        <div class="compare-hud-title">
+            <span>Сравнение A ↔ B</span>
+            <button class="compare-close" id="compareClose" title="Закрыть">✕</button>
+        </div>
+        <div id="compareContent"></div>
+    </div>
+
+    <div class="bottom-toolbar">
+        <div class="toolbar-row">
+            <div class="view-buttons">
+                <button class="view-btn active" data-view="3d">🎲 3D</button>
+                <button class="view-btn" data-view="iso">📐 Изо</button>
+                <button class="view-btn" data-view="top">⬆ Сверху</button>
+                <button class="view-btn" data-view="side">➡ Сбоку</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <button class="rotate-toggle" id="rotateToggle" title="Пауза/запуск вращения">⏸</button>
+        </div>
+        <div class="toolbar-row">
+            <button class="edge-toggle-btn" id="edgeToggle" title="Переключить тип торца">🔧 Открытый торец</button>
+            <div class="toolbar-divider"></div>
+            <div class="layers-dropdown">
+                <button class="layers-btn" id="layersBtn">📦 Слои (<span id="layersCount">5/5</span>) ▼</button>
+                <div class="layers-popover" id="layersPopover">
+                    <label><input type="checkbox" id="showFace" checked> Лицевой лист</label>
+                    <label><input type="checkbox" id="showGlue1" checked> Клей 1 (PUR)</label>
+                    <label><input type="checkbox" id="showCore" checked> Заполнитель ядра</label>
+                    <label><input type="checkbox" id="showGlue2" checked> Клей 2 (PUR)</label>
+                    <label><input type="checkbox" id="showBack" checked> Тыльный лист</label>
+                    <div class="layers-actions">
+                        <button id="layersShowAll">Показать все</button>
+                        <button id="layersHideAll">Скрыть все</button>
+                    </div>
+                </div>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="explode-control">
+                <span>💥 Разнесение:</span>
+                <input type="range" id="explodeSlider" min="0" max="100" step="1" value="0">
+                <span class="explode-val" id="explodeVal">0%</span>
+            </div>
+            <div class="toolbar-divider"></div>
+            <button class="assembly-btn" id="animateAssembly">▶ Сборка</button>
+        </div>
+        <div class="toolbar-row right">
+            <div class="light-hud">
+                <button class="light-btn active" data-scene="studio">📷 Студия</button>
+                <button class="light-btn" data-scene="street">☀ Улица</button>
+                <button class="light-btn" data-scene="interior">💡 Интерьер</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas3d"></canvas>
+</div>
+
+<div class="pdf-template" id="pdfTemplate">
+    <div class="pdf-header">
+        <div>
+            <div class="pdf-logo">ZS<span>MK</span></div>
+            <div class="pdf-title">Спецификация сэндвич-панели</div>
+        </div>
+        <div class="pdf-meta">
+            <div><strong>ID:</strong> <span id="pdfConfigId">ZSMK-XXXX</span></div>
+            <div><strong>Дата:</strong> <span id="pdfDate">—</span></div>
+            <div><strong>Версия:</strong> 3.05</div>
+        </div>
+    </div>
+    <div class="pdf-section">
+        <div class="pdf-section-title">1. Габаритные параметры</div>
+        <table class="pdf-table">
+            <tr><td>Длина × Ширина</td><td class="value-cell" id="pdfDimensions">—</td></tr>
+            <tr><td>Общая толщина панели</td><td class="value-cell" id="pdfTotalThick">—</td></tr>
+            <tr><td>Площадь образца</td><td class="value-cell" id="pdfArea">—</td></tr>
+            <tr><td>Масса образца / 1 м²</td><td class="value-cell" id="pdfWeight">—</td></tr>
+        </table>
+    </div>
+    <div class="pdf-section">
+        <div class="pdf-section-title">2. Структура панели (послойно)</div>
+        <table class="pdf-table">
+            <thead><tr><th>Слой</th><th>Материал</th><th>Толщина</th><th>Плотность</th></tr></thead>
+            <tbody id="pdfLayersBody"></tbody>
+        </table>
+        <div class="pdf-note">* Клеевой слой PUR (0.3 мм) — технологический, не влияет на общую толщину панели.</div>
+    </div>
+    <div class="pdf-section">
+        <div class="pdf-section-title">3. Технические характеристики</div>
+        <table class="pdf-table">
+            <tr><td>Пожарный класс</td><td class="value-cell highlight-cell" id="pdfFire">—</td></tr>
+            <tr><td>Теплосопротивление R</td><td class="value-cell" id="pdfR">—</td></tr>
+            <tr><td>Ориентировочная стоимость (за м²)</td><td class="value-cell highlight-cell" id="pdfCost">—</td></tr>
+        </table>
+    </div>
+    <div class="pdf-section">
+        <div class="pdf-section-title">4. Габаритный чертёж</div>
+        <div class="pdf-drawing" id="pdfDrawing"></div>
+    </div>
+    <div class="pdf-footer">
+        <div>
+            <div style="font-weight:600; color:#1e293b;">Конфигуратор ZSMK v3.05</div>
+            <div>Документ сформирован автоматически</div>
+        </div>
+        <div class="pdf-qr" id="pdfQr"></div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const ralPalette = [
+    { code: "RAL 9003", name: "Сигнальный белый", hex: "#F4F8F4", costFactor: 1.0 },
+    { code: "RAL 9006", name: "Бело-алюминиевый", hex: "#A5A8A6", costFactor: 1.05 },
+    { code: "RAL 7016", name: "Антрацитово-серый", hex: "#383E42", costFactor: 1.0 },
+    { code: "RAL 9005", name: "Глубокий чёрный", hex: "#0A0A0A", costFactor: 1.1 },
+    { code: "RAL 3020", name: "Транспортный красный", hex: "#BF1515", costFactor: 1.2 },
+    { code: "RAL 5015", name: "Небесно-синий", hex: "#2271B3", costFactor: 1.15 },
+    { code: "RAL 6005", name: "Зелёный мох", hex: "#0E4429", costFactor: 1.05 },
+    { code: "RAL 1015", name: "Светлая слоновая кость", hex: "#E6D5B8", costFactor: 1.0 },
+    { code: "RAL 8017", name: "Шоколадно-коричневый", hex: "#442F29", costFactor: 1.0 },
+    { code: "RAL 7040", name: "Серое окно", hex: "#989EA2", costFactor: 1.0 },
+    { code: "RAL 9010", name: "Чистый белый", hex: "#F7F9F4", costFactor: 1.05 },
+    { code: "RAL 7035", name: "Светло-серый", hex: "#D1D4D1", costFactor: 1.0 },
+    { code: "RAL 1023", name: "Транспортный жёлтый", hex: "#F7B500", costFactor: 1.25 },
+    { code: "RAL 2004", name: "Чистый оранжевый", hex: "#E65200", costFactor: 1.25 },
+    { code: "RAL 5002", name: "Ультрамарин синий", hex: "#102175", costFactor: 1.15 },
+    { code: "RAL 6018", name: "Желтовато-зелёный", hex: "#48A81B", costFactor: 1.15 },
+    { code: "RAL 7015", name: "Сланцево-серый", hex: "#434B4D", costFactor: 1.05 },
+    { code: "RAL 7021", name: "Черно-серый", hex: "#2F3234", costFactor: 1.05 },
+    { code: "RAL 8019", name: "Серо-коричневый", hex: "#3D3635", costFactor: 1.0 },
+    { code: "RAL 9002", name: "Серо-белый", hex: "#E3E3DC", costFactor: 1.0 },
+    { code: "CUSTOM", name: "Пользовательский HEX", hex: "#FFFFFF", costFactor: 1.3 }
+];
+
+const hplDecorPalette = [
+    { id: "hpl_oak_nat", name: "🌳 Дуб Натуральный", type: "wood", baseColor: "#b88b5c", lineColor: "#7c5935", roughness: 0.6 },
+    { id: "hpl_oak_white", name: "🌳 Дуб Белёный", type: "wood", baseColor: "#e3d7c3", lineColor: "#c2b097", roughness: 0.65 },
+    { id: "hpl_oak_mor", name: "🌳 Дуб Морёный", type: "wood", baseColor: "#4a3a2c", lineColor: "#2a1f17", roughness: 0.55 },
+    { id: "hpl_walnut", name: "🌳 Орех", type: "wood", baseColor: "#6a4e38", lineColor: "#3d2b1f", roughness: 0.5 },
+    { id: "hpl_wenge", name: "🌳 Венге", type: "wood", baseColor: "#2b1d16", lineColor: "#150e0b", roughness: 0.7 },
+    { id: "hpl_ash", name: "🌳 Ясень", type: "wood", baseColor: "#d9c9a8", lineColor: "#a89574", roughness: 0.6 },
+    { id: "hpl_cherry", name: "🌳 Вишня", type: "wood", baseColor: "#913d24", lineColor: "#592110", roughness: 0.45 },
+    { id: "hpl_musson", name: "🎨 Муссон", type: "solid", baseColor: "#8a9199", lineColor: "#61676e", roughness: 0.55 },
+    { id: "hpl_graphite", name: "🎨 Графит", type: "solid", baseColor: "#2d3139", lineColor: "#181a1f", roughness: 0.5 },
+    { id: "hpl_ivory", name: "🎨 Слоновая кость", type: "solid", baseColor: "#efe6d2", lineColor: "#d5c8a8", roughness: 0.55 },
+    { id: "hpl_cappuccino", name: "🎨 Капучино", type: "solid", baseColor: "#b08b6a", lineColor: "#7a5d44", roughness: 0.55 },
+    { id: "hpl_terracotta", name: "🎨 Терракота", type: "solid", baseColor: "#c66b3d", lineColor: "#7a3d1f", roughness: 0.6 },
+    { id: "hpl_light_concrete", name: "🧱 Светлый бетон", type: "concrete", baseColor: "#c8ccd0", lineColor: "#9aa0a6", roughness: 0.85 },
+    { id: "hpl_dark_cement", name: "🧱 Тёмный цемент", type: "concrete", baseColor: "#3a3f45", lineColor: "#1f2327", roughness: 0.9 },
+    { id: "hpl_corten", name: "🧱 Кортен", type: "corten", baseColor: "#a34e26", lineColor: "#5c260e", roughness: 0.75 },
+    { id: "hpl_linen_light", name: "🧵 Лён Светлый", type: "linen", baseColor: "#e6dcc4", lineColor: "#b8a880", roughness: 0.95 },
+    { id: "hpl_linen_dark", name: "🧵 Лён Тёмный", type: "linen", baseColor: "#8a7a5e", lineColor: "#5a4e3a", roughness: 0.95 },
+    { id: "hpl_rogoska", name: "🧵 Рогожка", type: "linen", baseColor: "#b5a48a", lineColor: "#7a6a52", roughness: 0.95 },
+    { id: "hpl_burlap", name: "🧵 Мешковина", type: "linen", baseColor: "#a89068", lineColor: "#6a5a3e", roughness: 0.95 },
+    { id: "hpl_terrazzo", name: "✨ Тераццо", type: "terrazzo", baseColor: "#e2e8f0", lineColor: "#ef4444", roughness: 0.3 },
+    { id: "hpl_patina", name: "✨ Медь Патинированная", type: "patina", baseColor: "#2a6f6d", lineColor: "#7bc0b1", roughness: 0.6 },
+    { id: "hpl_microconcrete", name: "🧱 Микробетон", type: "concrete", baseColor: "#334155", lineColor: "#1e293b", roughness: 0.8 },
+    { id: "hpl_sandstone", name: "🧱 Песчаник", type: "concrete", baseColor: "#d4b896", lineColor: "#a88e6a", roughness: 0.85 },
+    { id: "hpl_oxidized", name: "✨ Окисленный металл", type: "patina", baseColor: "#4a7a6a", lineColor: "#2a4a3a", roughness: 0.7 },
+    { id: "hpl_bronze", name: "✨ Бронза", type: "patina", baseColor: "#8a6a3a", lineColor: "#5a4420", roughness: 0.55 }
+];
+
+const ceramicDecorPalette = [
+    { id: "cer_carrara", name: "💎 Каррара", type: "marble", baseColor: "#f0f2f5", lineColor: "#9ca3af", roughness: 0.2 },
+    { id: "cer_nero", name: "💎 Неро Марквина", type: "marble", baseColor: "#1e293b", lineColor: "#e2e8f0", roughness: 0.15 },
+    { id: "cer_calacatta", name: "💎 Калакатта", type: "marble", baseColor: "#f5f1ea", lineColor: "#a89880", roughness: 0.18 },
+    { id: "cer_onyx", name: "💎 Оникс", type: "marble", baseColor: "#e8c98a", lineColor: "#a8864a", roughness: 0.22 },
+    { id: "cer_travertine", name: "💎 Травертин", type: "marble", baseColor: "#dfd5bf", lineColor: "#b3a68b", roughness: 0.4 },
+    { id: "cer_grey_granite", name: "🪨 Серый гранит", type: "granite", baseColor: "#8e9296", lineColor: "#4a4d50", roughness: 0.5 },
+    { id: "cer_gabbro", name: "🪨 Габбро-диабаз", type: "granite", baseColor: "#2a2d30", lineColor: "#1a1c1e", roughness: 0.45 },
+    { id: "cer_basalt", name: "🪨 Базальт", type: "granite", baseColor: "#3a3d42", lineColor: "#1f2124", roughness: 0.7 },
+    { id: "cer_labradorite", name: "🪨 Лабрадорит", type: "labradorite", baseColor: "#2a3040", lineColor: "#5a7090", roughness: 0.35 },
+    { id: "cer_monocolor", name: "🎨 Моноколор матовый", type: "concrete", baseColor: "#4a4d52", lineColor: "#2a2d32", roughness: 0.85 },
+    { id: "cer_cement", name: "🧱 Шлиф. цемент", type: "concrete", baseColor: "#a1a8b0", lineColor: "#787f85", roughness: 0.7 },
+    { id: "cer_clinker", name: "🧱 Клинкер", type: "concrete", baseColor: "#7a4a32", lineColor: "#4a2a1a", roughness: 0.8 },
+    { id: "cer_statuario", name: "💎 Статуарио", type: "marble", baseColor: "#fafaf5", lineColor: "#b0a898", roughness: 0.2 },
+    { id: "cer_emperador", name: "💎 Эмперадор", type: "marble", baseColor: "#6a4a30", lineColor: "#3a2818", roughness: 0.3 },
+    { id: "cer_black_granite", name: "🪨 Чёрный гранит", type: "granite", baseColor: "#1a1c1e", lineColor: "#0a0c0e", roughness: 0.25 },
+    { id: "cer_bianco", name: "💎 Бьяно Каррара", type: "marble", baseColor: "#f8f8f5", lineColor: "#c0c0c0", roughness: 0.2 },
+    { id: "cer_sahara", name: "🪨 Сахара Браун", type: "granite", baseColor: "#a87a4a", lineColor: "#6a4a2a", roughness: 0.55 },
+    { id: "cer_imperial", name: "🪨 Империал", type: "granite", baseColor: "#8a4a3a", lineColor: "#4a2a1a", roughness: 0.5 },
+    { id: "cer_blue_perl", name: "🪨 Синий жемчуг", type: "granite", baseColor: "#3a4a5a", lineColor: "#1a2a3a", roughness: 0.4 },
+    { id: "cer_botticino", name: "💎 Боттичино", type: "marble", baseColor: "#e8d8b8", lineColor: "#b8a078", roughness: 0.35 },
+    { id: "cer_grey_stone", name: "🪨 Серый камень (матовый)", type: "concrete", baseColor: "#8a8d90", lineColor: "#5a5d60", roughness: 0.75 }
+];
+
+const coreTypes = {
+    honeycomb: { name: "Алюминиевый сотопакет", density: 120, lambda: 0.05, fireClass: "КМ0 / НГ", fireOk: true, baseCostPerM3: 18000, color: "#a1a8b0", metalness: 0.8, roughness: 0.2, info: "Алюминиевый сотопакет — легкий жесткий заполнитель. Плотность ~120 кг/м³.", minThick: 10, maxThick: 100, defaultThick: 20 },
+    sml: { name: "СМЛ (Стекломагниевый лист)", density: 1050, lambda: 0.21, fireClass: "КМ0 / НГ", fireOk: true, baseCostPerM3: 6500, color: "#d4d4d0", metalness: 0.0, roughness: 0.9, info: "СМЛ — плотный минеральный композит. Плотность ~1050 кг/м³.", minThick: 4, maxThick: 20, defaultThick: 8 },
+    hxp: { name: "ХЦП (Хризотилцементная плита)", density: 1600, lambda: 0.35, fireClass: "КМ0 / НГ", fireOk: true, baseCostPerM3: 7800, color: "#5a5f64", metalness: 0.0, roughness: 0.85, info: "ХЦП — тяжёлая индустриальная плита. Плотность ~1600 кг/м³.", minThick: 4, maxThick: 20, defaultThick: 8 },
+    mvp: { name: "МВП (Минераловатная плита)", density: 140, lambda: 0.042, fireClass: "КМ0 / НГ", fireOk: true, baseCostPerM3: 9500, color: "#d4c878", metalness: 0.0, roughness: 0.95, info: "МВП — минераловатная плита повышенной жесткости. Плотность ~140 кг/м³.", minThick: 4, maxThick: 100, defaultThick: 20 },
+    pir: { name: "PIR-плита (Пенополиизоцианурат)", density: 35, lambda: 0.023, fireClass: "КМ1 / Г1", fireOk: false, baseCostPerM3: 14000, color: "#e8d878", metalness: 0.0, roughness: 0.8, info: "PIR — легкий полимерный заполнитель. Плотность ~35 кг/м³.", minThick: 4, maxThick: 100, defaultThick: 20 }
+};
+
+const materialSpecs = {
+    aluminum:  { density: 2700, costPerM2PerMm: 1800, lambda: 230, fireClass: "НГ", fireOk: true, label: "Алюминий" },
+    galvanized:{ density: 7850, costPerM2PerMm: 1200, lambda: 55,  fireClass: "НГ", fireOk: true, label: "Оцинкованная сталь" },
+    enameled:  { density: 7850, costPerM2PerMm: 5200, lambda: 1.2, fireClass: "НГ", fireOk: true, enamelDensity: 2500, label: "Эмалированная сталь" },
+    steel:     { density: 7850, costPerM2PerMm: 3500, lambda: 15,  fireClass: "НГ", fireOk: true, label: "Нержавеющая сталь" },
+    hpl:       { density: 1400, costPerM2PerMm: 2800, lambda: 0.3, fireClass: "Г2", fireOk: false, label: "HPL-пластик" },
+    ceramic:   { density: 2400, costPerM2PerMm: 4900, lambda: 2.5, fireClass: "НГ", fireOk: true, label: "Керамогранит" }
+};
+
+const presets = [
+    {
+        id: "unikor", name: "Уникор",
+        desc: "Al 9003 + соты + Al 9006",
+        config: { faceMat: "aluminum", faceThickness: 1.0, faceHex: "#F4F8F4", faceRal: "RAL 9003", faceFinish: "matte", backMat: "aluminum", backThickness: 1.0, backHex: "#A5A8A6", backRal: "RAL 9006", backFinish: "matte", coreType: "honeycomb", coreThickness: 20, cellSize: "9.5", foilThickness: 0.05, width: 300, length: 400 }
+    },
+    {
+        id: "hardwall", name: "Хардволл",
+        desc: "Эмаль 0.5 + ХЦП 8 + Оцинк 0.35",
+        config: { faceMat: "enameled", faceThickness: 0.5, faceEnamel: 0.4, faceHex: "#F4F8F4", faceRal: "RAL 9003", faceFinish: "glossy", backMat: "galvanized", backThickness: 0.35, backHex: "#A5A8A6", backRal: "RAL 9006", backFinish: "matte", coreType: "hxp", solidCoreThickness: 8, width: 400, length: 600 }
+    },
+    {
+        id: "thermo", name: "Теплоизоляц.",
+        desc: "Al + PIR 80 + Al",
+        config: { faceMat: "aluminum", faceThickness: 1.0, faceHex: "#D1D4D1", faceRal: "RAL 7035", faceFinish: "matte", backMat: "aluminum", backThickness: 0.7, backHex: "#A5A8A6", backRal: "RAL 9006", backFinish: "matte", coreType: "pir", solidCoreThickness: 80, width: 400, length: 600 }
+    },
+    {
+        id: "hpl_decor", name: "Декор HPL",
+        desc: "HPL Дуб + соты + HPL",
+        config: { faceMat: "hpl", faceThickness: 1.0, faceDecor: "hpl_oak_nat", backMat: "hpl", backThickness: 0.8, coreType: "honeycomb", coreThickness: 20, cellSize: "9.5", foilThickness: 0.05, width: 300, length: 400 }
+    },
+    {
+        id: "metro", name: "Метро/Тоннель",
+        desc: "Нерж N4 + СМЛ + Нерж",
+        config: { faceMat: "steel", faceThickness: 0.8, faceSSFinish: "brushed", backMat: "steel", backThickness: 0.6, backSSFinish: "matte", coreType: "sml", solidCoreThickness: 12, width: 500, length: 1000 }
+    },
+    {
+        id: "unikor_ceramic", name: "Уникор Керамик",
+        desc: "Керамогранит 3.5 + соты 18 + Оцинк 0.7",
+        config: { faceMat: "ceramic", faceThickness: 3.5, faceDecor: "cer_monocolor", backMat: "galvanized", backThickness: 0.7, backHex: "#A5A8A6", backRal: "RAL 9006", backFinish: "matte", coreType: "honeycomb", coreThickness: 18, cellSize: "9.5", foilThickness: 0.05, width: 400, length: 600 }
+    },
+    {
+        id: "budget", name: "Бюджет",
+        desc: "Оцинк 0.5 9003 + СМЛ 6 + Оцинк 0.35 9006",
+        config: { faceMat: "galvanized", faceThickness: 0.5, faceHex: "#F4F8F4", faceRal: "RAL 9003", faceFinish: "matte", backMat: "galvanized", backThickness: 0.35, backHex: "#A5A8A6", backRal: "RAL 9006", backFinish: "matte", coreType: "sml", solidCoreThickness: 6, width: 300, length: 400 }
+    },
+    {
+        id: "my_slot", name: "💾 Мой вариант",
+        desc: "Нажмите, чтобы сохранить",
+        isSlot: true
+    }
+];
+
+// ============================================================
+// PROCEDURAL TEXTURES
+// ============================================================
+function generateProceduralTexture(decor) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = decor.baseColor;
+    ctx.fillRect(0, 0, 512, 512);
+
+    if (decor.type === "wood") {
+        ctx.strokeStyle = decor.lineColor; ctx.lineWidth = 1.5;
+        for (let i = 0; i < 512; i += 4) {
+            ctx.beginPath(); let x = 0; ctx.moveTo(x, i);
+            while (x < 512) { x += 10 + Math.random() * 20; ctx.lineTo(x, i + Math.sin(x * 0.02) * 5 + (Math.random() - 0.5) * 2); }
+            ctx.stroke();
+        }
+    } else if (decor.type === "marble") {
+        ctx.strokeStyle = decor.lineColor;
+        for (let v = 0; v < 10; v++) {
+            ctx.lineWidth = 0.5 + Math.random() * 2.5; ctx.globalAlpha = 0.4 + Math.random() * 0.5;
+            ctx.beginPath(); let x = Math.random() * 512, y = 0; ctx.moveTo(x, y);
+            while (y < 512) { x += (Math.random() - 0.5) * 18; y += 5 + Math.random() * 15; ctx.lineTo(x, y); }
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1.0;
+    } else if (decor.type === "granite" || decor.type === "labradorite") {
+        for (let p = 0; p < 50000; p++) {
+            let rx = Math.random() * 512, ry = Math.random() * 512, size = Math.random() * 2.5, rnd = Math.random();
+            if (rnd < 0.3) ctx.fillStyle = decor.lineColor;
+            else if (rnd < 0.7) ctx.fillStyle = "rgba(255,255,255,0.15)";
+            else if (decor.type === "labradorite" && rnd > 0.92) ctx.fillStyle = "#6a90c0";
+            else ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.fillRect(rx, ry, size, size);
+        }
+    } else if (decor.type === "concrete" || decor.type === "solid") {
+        for (let p = 0; p < 40000; p++) {
+            ctx.fillStyle = Math.random() > 0.5 ? decor.lineColor : "rgba(255,255,255,0.15)";
+            ctx.fillRect(Math.random()*512, Math.random()*512, Math.random()*2, Math.random()*2);
+        }
+    } else if (decor.type === "corten") {
+        for (let i = 0; i < 300; i++) {
+            let rx = Math.random() * 512, ry = Math.random() * 512, r = 10 + Math.random() * 40;
+            let grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, r);
+            let shade = Math.random();
+            if (shade < 0.5) { grad.addColorStop(0, "rgba(180,80,30,0.6)"); grad.addColorStop(1, "rgba(100,40,10,0)"); }
+            else { grad.addColorStop(0, "rgba(60,25,5,0.7)"); grad.addColorStop(1, "rgba(60,25,5,0)"); }
+            ctx.fillStyle = grad; ctx.fillRect(rx - r, ry - r, r * 2, r * 2);
+        }
+    } else if (decor.type === "linen") {
+        const threadSize = 4;
+        for (let y = 0; y < 512; y += threadSize) {
+            for (let x = 0; x < 512; x += threadSize) {
+                let isWarp = ((Math.floor(x / threadSize) + Math.floor(y / threadSize)) % 2) === 0;
+                let variation = (Math.random() - 0.5) * 20;
+                if (isWarp) {
+                    ctx.fillStyle = adjustBrightness(decor.baseColor, variation - 10);
+                    ctx.fillRect(x, y, threadSize - 0.5, threadSize - 1);
+                    ctx.fillStyle = adjustBrightness(decor.lineColor, variation);
+                    ctx.fillRect(x, y + threadSize - 1, threadSize - 0.5, 1);
+                } else {
+                    ctx.fillStyle = adjustBrightness(decor.baseColor, variation - 5);
+                    ctx.fillRect(x, y, threadSize - 1, threadSize - 0.5);
+                    ctx.fillStyle = adjustBrightness(decor.lineColor, variation);
+                    ctx.fillRect(x + threadSize - 1, y, 1, threadSize - 0.5);
+                }
+            }
+        }
+    } else if (decor.type === "terrazzo") {
+        const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#1e293b"];
+        for (let i = 0; i < 200; i++) {
+            let rx = Math.random() * 512, ry = Math.random() * 512, r = 3 + Math.random() * 12;
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
+        }
+    } else if (decor.type === "patina") {
+        const baseGrad = ctx.createLinearGradient(0, 0, 512, 512);
+        baseGrad.addColorStop(0, "#b87333"); baseGrad.addColorStop(0.5, "#a86020"); baseGrad.addColorStop(1, "#8a4a18");
+        ctx.fillStyle = baseGrad; ctx.fillRect(0, 0, 512, 512);
+        for (let p = 0; p < 30000; p++) {
+            ctx.fillStyle = Math.random() > 0.5 ? "rgba(255,200,150,0.25)" : "rgba(80,40,10,0.25)";
+            ctx.fillRect(Math.random()*512, Math.random()*512, Math.random()*1.5, Math.random()*1.5);
+        }
+        const patinaColors = ["rgba(42, 111, 109, 0.55)", "rgba(30, 90, 80, 0.5)", "rgba(80, 160, 140, 0.45)", "rgba(55, 140, 120, 0.5)", "rgba(25, 75, 70, 0.55)", "rgba(120, 190, 170, 0.4)"];
+        for (let i = 0; i < 45; i++) {
+            let rx = Math.random() * 512, ry = Math.random() * 512, r = 40 + Math.random() * 90;
+            let grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, r);
+            let col = patinaColors[Math.floor(Math.random() * patinaColors.length)];
+            grad.addColorStop(0, col); grad.addColorStop(0.6, col.replace(/[\d.]+\)$/, "0.2)")); grad.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+    return texture;
+}
+
+function adjustBrightness(hex, amount) {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    let r = parseInt(c.substr(0, 2), 16), g = parseInt(c.substr(2, 2), 16), b = parseInt(c.substr(4, 2), 16);
+    r = Math.max(0, Math.min(255, r + amount)); g = Math.max(0, Math.min(255, g + amount)); b = Math.max(0, Math.min(255, b + amount));
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+}
+
+function createBrushedNormalMap() {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#8080ff'; ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 500; i++) {
+        let y = Math.random() * 256, len = 20 + Math.random() * 80, x = Math.random() * 256;
+        ctx.fillStyle = `rgb(${Math.floor(110 + Math.random() * 35)}, 128, 255)`;
+        ctx.fillRect(x, y, len, 1);
+    }
+    const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+function createGalvanizedBumpMap() {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 400; i++) {
+        let rx = Math.random() * 256, ry = Math.random() * 256, r = 5 + Math.random() * 15;
+        let grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, r);
+        let v = Math.floor(100 + Math.random() * 80);
+        grad.addColorStop(0, `rgb(${v},${v},${v})`); grad.addColorStop(1, "rgb(128,128,128)");
+        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
+    }
+    const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+function createLinenBumpMap() {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d'); const ts = 4;
+    for (let y = 0; y < 256; y += ts) {
+        for (let x = 0; x < 256; x += ts) {
+            let isWarp = ((Math.floor(x / ts) + Math.floor(y / ts)) % 2) === 0;
+            ctx.fillStyle = isWarp ? "#c0c0c0" : "#808080";
+            ctx.fillRect(x, y, ts, ts);
+        }
+    }
+    const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(8, 8); return t;
+}
+
+function createSmlBumpMap() {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#a0a0a0'; ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 2000; i++) {
+        let rx = Math.random() * 256, ry = Math.random() * 256, r = 0.5 + Math.random() * 2;
+        ctx.fillStyle = Math.random() > 0.5 ? "#606060" : "#d0d0d0";
+        ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
+    }
+    const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+function createMvpBumpMap() {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#909090'; ctx.fillRect(0, 0, 256, 256);
+    ctx.strokeStyle = "#606060"; ctx.lineWidth = 0.5;
+    for (let i = 0; i < 800; i++) {
+        let x = Math.random() * 256, y = Math.random() * 256, angle = Math.random() * Math.PI, len = 3 + Math.random() * 8;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len); ctx.stroke();
+    }
+    const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+// ============================================================
+// ENVIRONMENT MAPS
+// ============================================================
+function createStudioEnvScene() {
+    const scene = new THREE.Scene();
+    const bgCanvas = document.createElement('canvas'); bgCanvas.width = 1024; bgCanvas.height = 512;
+    const bgCtx = bgCanvas.getContext('2d');
+    const grad = bgCtx.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, '#d8dce0'); grad.addColorStop(0.5, '#c0c5ca'); grad.addColorStop(1, '#a8aeb4');
+    bgCtx.fillStyle = grad; bgCtx.fillRect(0, 0, 1024, 512);
+    function drawSoftbox(x, y, w, h, intensity) {
+        const g = bgCtx.createRadialGradient(x + w/2, y + h/2, 0, x + w/2, y + h/2, Math.max(w, h));
+        g.addColorStop(0, `rgba(255,255,255,${intensity})`);
+        g.addColorStop(0.5, `rgba(255,255,255,${intensity * 0.4})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        bgCtx.fillStyle = g; bgCtx.fillRect(x, y, w, h);
+    }
+    drawSoftbox(100, 50, 200, 150, 0.75);
+    drawSoftbox(700, 80, 250, 120, 0.6);
+    drawSoftbox(400, 350, 180, 100, 0.45);
+    const bgTex = new THREE.CanvasTexture(bgCanvas);
+    bgTex.mapping = THREE.EquirectangularReflectionMapping;
+    scene.background = bgTex; scene.environment = bgTex;
+    return { scene, bgTex };
+}
+
+function createStreetEnvScene() {
+    const scene = new THREE.Scene();
+    const bgCanvas = document.createElement('canvas'); bgCanvas.width = 1024; bgCanvas.height = 512;
+    const bgCtx = bgCanvas.getContext('2d');
+    const skyGrad = bgCtx.createLinearGradient(0, 0, 0, 300);
+    skyGrad.addColorStop(0, '#7ab0d8'); skyGrad.addColorStop(0.6, '#b0cce0'); skyGrad.addColorStop(1, '#d8e4ec');
+    bgCtx.fillStyle = skyGrad; bgCtx.fillRect(0, 0, 1024, 300);
+    for (let i = 0; i < 30; i++) {
+        let x = Math.random() * 1024, y = Math.random() * 200, r = 50 + Math.random() * 100;
+        const g = bgCtx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        bgCtx.fillStyle = g; bgCtx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    const groundGrad = bgCtx.createLinearGradient(0, 300, 0, 512);
+    groundGrad.addColorStop(0, '#8a9a7a'); groundGrad.addColorStop(1, '#4a5a3a');
+    bgCtx.fillStyle = groundGrad; bgCtx.fillRect(0, 300, 1024, 212);
+    const sunX = 780, sunY = 100;
+    const sunGrad = bgCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 120);
+    sunGrad.addColorStop(0, 'rgba(255,250,220,0.9)'); sunGrad.addColorStop(0.2, 'rgba(255,240,200,0.6)');
+    sunGrad.addColorStop(0.5, 'rgba(255,220,180,0.25)'); sunGrad.addColorStop(1, 'rgba(255,200,150,0)');
+    bgCtx.fillStyle = sunGrad; bgCtx.fillRect(sunX - 120, sunY - 120, 240, 240);
+    const bgTex = new THREE.CanvasTexture(bgCanvas);
+    bgTex.mapping = THREE.EquirectangularReflectionMapping;
+    scene.background = bgTex; scene.environment = bgTex;
+    return { scene, bgTex };
+}
+
+function createInteriorEnvScene() {
+    const scene = new THREE.Scene();
+    const bgCanvas = document.createElement('canvas'); bgCanvas.width = 1024; bgCanvas.height = 512;
+    const bgCtx = bgCanvas.getContext('2d');
+    const grad = bgCtx.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, '#5a5048'); grad.addColorStop(0.5, '#4a4540'); grad.addColorStop(1, '#3a3530');
+    bgCtx.fillStyle = grad; bgCtx.fillRect(0, 0, 1024, 512);
+    function drawWindow(x, y, w, h) {
+        const g = bgCtx.createLinearGradient(x, y, x, y + h);
+        g.addColorStop(0, 'rgba(255,245,220,0.85)');
+        g.addColorStop(1, 'rgba(255,230,200,0.5)');
+        bgCtx.fillStyle = g; bgCtx.fillRect(x, y, w, h);
+        const glow = bgCtx.createRadialGradient(x + w/2, y + h/2, 0, x + w/2, y + h/2, Math.max(w, h));
+        glow.addColorStop(0, 'rgba(255,235,200,0.4)'); glow.addColorStop(1, 'rgba(255,235,200,0)');
+        bgCtx.fillStyle = glow; bgCtx.fillRect(x - w, y - h, w * 3, h * 3);
+    }
+    drawWindow(100, 80, 120, 200);
+    drawWindow(400, 100, 150, 180);
+    drawWindow(750, 90, 130, 190);
+    for (let i = 0; i < 6; i++) {
+        let x = Math.random() * 1024, y = Math.random() * 300, r = 50 + Math.random() * 70;
+        const g = bgCtx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, 'rgba(255,240,210,0.75)');
+        g.addColorStop(1, 'rgba(255,240,210,0)');
+        bgCtx.fillStyle = g; bgCtx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    const bgTex = new THREE.CanvasTexture(bgCanvas);
+    bgTex.mapping = THREE.EquirectangularReflectionMapping;
+    scene.background = bgTex; scene.environment = bgTex;
+    return { scene, bgTex };
+}
+
+// ============================================================
+// THREE.JS SCENE
+// ============================================================
+const canvas3d = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#111827');
+
+const camera = new THREE.PerspectiveCamera(45, 1, 1, 10000);
+camera.position.set(400, 350, 500);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.05;
+controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+pmremGenerator.compileEquirectangularShader();
+
+const studioEnvData = createStudioEnvScene();
+const streetEnvData = createStreetEnvScene();
+const interiorEnvData = createInteriorEnvScene();
+
+const envMaps = {
+    studio: pmremGenerator.fromScene(studioEnvData.scene, 0.04).texture,
+    street: pmremGenerator.fromScene(streetEnvData.scene, 0.04).texture,
+    interior: pmremGenerator.fromScene(interiorEnvData.scene, 0.04).texture
+};
+const backgrounds = {
+    studio: studioEnvData.bgTex,
+    street: streetEnvData.bgTex,
+    interior: interiorEnvData.bgTex
+};
+
+scene.environment = envMaps.studio;
+scene.background = backgrounds.studio;
+
+const ambientLight = new THREE.AmbientLight('#ffffff', 0.35);
+scene.add(ambientLight);
+
+const neutralFill = new THREE.DirectionalLight('#ffffff', 0.3);
+neutralFill.position.set(-300, 200, -200);
+scene.add(neutralFill);
+
+const studioLights = new THREE.Group();
+const dirLight1 = new THREE.DirectionalLight('#ffffff', 1.0); dirLight1.position.set(200, 500, 200); studioLights.add(dirLight1);
+const dirLight2 = new THREE.DirectionalLight('#ffffff', 0.5); dirLight2.position.set(-200, 300, -200); studioLights.add(dirLight2);
+scene.add(studioLights);
+
+const streetLights = new THREE.Group();
+const sunLight = new THREE.DirectionalLight('#fff4e0', 1.8);
+sunLight.position.set(500, 600, 300);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048; sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 0.5; sunLight.shadow.camera.far = 2000;
+sunLight.shadow.camera.left = -600; sunLight.shadow.camera.right = 600;
+sunLight.shadow.camera.top = 600; sunLight.shadow.camera.bottom = -600;
+sunLight.shadow.bias = -0.0005;
+sunLight.shadow.radius = 3;
+streetLights.add(sunLight);
+const skyLight = new THREE.HemisphereLight('#87ceeb', '#3d5229', 0.6);
+streetLights.add(skyLight);
+
+const interiorLights = new THREE.Group();
+const spot1 = new THREE.PointLight('#ffd8a0', 2.2, 1200, 2); spot1.position.set(100, 400, 100); interiorLights.add(spot1);
+const spot2 = new THREE.PointLight('#ffd8a0', 1.5, 1000, 2); spot2.position.set(-200, 350, -150); interiorLights.add(spot2);
+
+const shadowPlaneGeom = new THREE.PlaneGeometry(3000, 3000);
+const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+const shadowPlane = new THREE.Mesh(shadowPlaneGeom, shadowPlaneMat);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = -200;
+shadowPlane.receiveShadow = true;
+shadowPlane.visible = false;
+scene.add(shadowPlane);
+
+const streetFog = new THREE.FogExp2('#a8c8e0', 0.0004);
+
+const brushedNormals = createBrushedNormalMap();
+const galvanizedBump = createGalvanizedBumpMap();
+const linenBump = createLinenBumpMap();
+const smlBump = createSmlBumpMap();
+const mvpBump = createMvpBumpMap();
+
+// ============================================================
+// PANEL HIERARCHY
+// ============================================================
+const panelGroup = new THREE.Group();
+scene.add(panelGroup);
+
+let faceMesh, backMesh, glue1Mesh, glue2Mesh, coreMesh;
+let edgeFlangeMeshes = [];
+
+const layerMaterials = {
+    face: new THREE.MeshStandardMaterial(),
+    back: new THREE.MeshStandardMaterial(),
+    glue: new THREE.MeshStandardMaterial({ color: '#c5c9b8', opacity: 0.5, transparent: true, roughness: 0.8 }),
+    core: new THREE.MeshStandardMaterial({ color: '#a1a8b0', metalness: 0.8, roughness: 0.2, side: THREE.DoubleSide }),
+    flange: new THREE.MeshStandardMaterial()
+};
+
+const annotationGroup = new THREE.Group();
+scene.add(annotationGroup);
+
+function createTextSprite(text) {
+    const canvas = document.createElement('canvas'); canvas.width = 400; canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    if (ctx.roundRect) ctx.roundRect(0, 0, 400, 48, 6); else ctx.fillRect(0,0,400,48);
+    ctx.fill();
+    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 200, 24);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, sizeAttenuation: true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(160, 19, 1);
+    return sprite;
+}
+
+const annotations = {
+    face: createTextSprite("Лицевой лист"),
+    glue1: createTextSprite("Клей PUR"),
+    core: createTextSprite("Заполнитель ядра"),
+    glue2: createTextSprite("Клей PUR"),
+    back: createTextSprite("Тыльный лист")
+};
+Object.values(annotations).forEach(s => annotationGroup.add(s));
+
+const lineMaterial = new THREE.LineBasicMaterial({ color: '#3b82f6', transparent: true, opacity: 0 });
+const linesGroup = new THREE.Group();
+scene.add(linesGroup);
+const lineGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(120,0,0)]);
+const annotationLines = {
+    face: new THREE.Line(lineGeom.clone(), lineMaterial.clone()),
+    glue1: new THREE.Line(lineGeom.clone(), lineMaterial.clone()),
+    core: new THREE.Line(lineGeom.clone(), lineMaterial.clone()),
+    glue2: new THREE.Line(lineGeom.clone(), lineMaterial.clone()),
+    back: new THREE.Line(lineGeom.clone(), lineMaterial.clone())
+};
+Object.values(annotationLines).forEach(l => linesGroup.add(l));
+
+// ============================================================
+// MATERIALS LOGIC
+// ============================================================
+function getTotalSheetThickness(matType, steelThickness, enamelThickness) {
+    if (matType === 'enameled') return steelThickness + 2 * enamelThickness;
+    return steelThickness;
+}
+
+function applyDecorToMaterial(mat, decor) {
+    mat.map = null; mat.normalMap = null; mat.bumpMap = null;
+    mat.clearcoat = 0; mat.clearcoatRoughness = 0;
+    const tex = generateProceduralTexture(decor);
+    mat.color.set('#ffffff');
+    mat.map = tex;
+    mat.metalness = 0.0;
+    mat.roughness = decor.roughness;
+    if (decor.type === "linen") { mat.bumpMap = linenBump; mat.bumpScale = 0.8; }
+}
+
+function applyMetalToMaterial(mat, metalType, hex, finish, surfaceFinish) {
+    mat.map = null; mat.normalMap = null; mat.bumpMap = null;
+    mat.clearcoat = 0; mat.clearcoatRoughness = 0;
+    const sf = surfaceFinish || 'matte';
+
+    if (metalType === 'aluminum') {
+        mat.color.set(hex);
+        mat.metalness = 0.6;
+        mat.roughness = sf === 'glossy' ? 0.12 : 0.45;
+    } else if (metalType === 'galvanized') {
+        mat.color.set(hex);
+        mat.metalness = 0.75;
+        mat.roughness = sf === 'glossy' ? 0.18 : 0.55;
+        mat.bumpMap = galvanizedBump;
+        mat.bumpScale = sf === 'glossy' ? 0.15 : 0.3;
+    } else if (metalType === 'enameled') {
+        mat.color.set(hex);
+        mat.metalness = 0.05;
+        if (sf === 'glossy') {
+            mat.roughness = 0.08;
+            mat.clearcoat = 0.95;
+            mat.clearcoatRoughness = 0.05;
+        } else {
+            mat.roughness = 0.25;
+            mat.clearcoat = 0.7;
+            mat.clearcoatRoughness = 0.2;
+        }
+    } else if (metalType === 'steel') {
+        mat.color.set('#e2e8f0');
+        if (finish === 'mirror') { mat.metalness = 1.0; mat.roughness = 0.02; }
+        else if (finish === 'brushed') { mat.metalness = 0.9; mat.roughness = 0.18; mat.normalMap = brushedNormals; }
+        else { mat.metalness = 0.8; mat.roughness = 0.4; }
+    }
+}
+
+// Получение значения поверхности из toggle-кнопок
+function getFinishValue(prefix) {
+    const btnGroup = document.getElementById(`${prefix}FinishBtns`);
+    if (!btnGroup) return 'matte';
+    const activeBtn = btnGroup.querySelector('button.active');
+    return activeBtn ? activeBtn.dataset.value : 'matte';
+}
+
+function updateMaterials() {
+    const fMatType = document.getElementById('faceMat').value;
+    if (['aluminum', 'galvanized', 'enameled', 'steel'].includes(fMatType)) {
+        const hex = document.getElementById('faceHex').value;
+        const finish = (fMatType === 'steel') ? document.getElementById('faceSSFinish').value : null;
+        const surfaceFinish = getFinishValue('face');
+        applyMetalToMaterial(layerMaterials.face, fMatType, hex, finish, surfaceFinish);
+    } else {
+        const palette = (fMatType === 'hpl') ? hplDecorPalette : ceramicDecorPalette;
+        const decorId = document.getElementById('faceDecor').value;
+        const decor = palette.find(d => d.id === decorId) || palette[0];
+        applyDecorToMaterial(layerMaterials.face, decor);
+    }
+
+    const bMatType = document.getElementById('backMat').value;
+    if (['aluminum', 'galvanized', 'enameled', 'steel'].includes(bMatType)) {
+        const hex = document.getElementById('backHex').value;
+        const finish = (bMatType === 'steel') ? document.getElementById('backSSFinish').value : null;
+        const surfaceFinish = getFinishValue('back');
+        applyMetalToMaterial(layerMaterials.back, bMatType, hex, finish, surfaceFinish);
+    } else {
+        const palette = (bMatType === 'hpl') ? hplDecorPalette : ceramicDecorPalette;
+        const decorId = document.getElementById('backDecor').value;
+        const decor = palette.find(d => d.id === decorId) || palette[0];
+        applyDecorToMaterial(layerMaterials.back, decor);
+    }
+
+    layerMaterials.flange.copy(layerMaterials.face);
+    layerMaterials.flange.side = THREE.DoubleSide;
+    
+    layerMaterials.face.needsUpdate = true;
+    layerMaterials.back.needsUpdate = true;
+    layerMaterials.flange.needsUpdate = true;
+}
+
+// ============================================================
+// GEOMETRY
+// ============================================================
+function getCoreThickness() {
+    const coreType = document.getElementById('coreType').value;
+    if (coreType === 'honeycomb') return parseFloat(document.getElementById('coreThickness').value);
+    return parseFloat(document.getElementById('solidCoreThickness').value);
+}
+
+let currentConfigId = 'ZSMK-' + Date.now().toString(36).toUpperCase();
+document.getElementById('hudConfigId').textContent = currentConfigId;
+
+function rebuildPanelGeometry() {
+    while (panelGroup.children.length > 0) {
+        let obj = panelGroup.children[0];
+        if (obj.geometry) obj.geometry.dispose();
+        panelGroup.remove(obj);
+    }
+    edgeFlangeMeshes = [];
+
+    const wX = parseFloat(document.getElementById('widthInput').value) || 300;
+    const lZ = parseFloat(document.getElementById('lengthInput').value) || 400;
+
+    const tFaceSteel = parseFloat(document.getElementById('faceThickness').value);
+    const tBackSteel = parseFloat(document.getElementById('backThickness').value);
+    const tFaceEnamel = parseFloat(document.getElementById('faceEnamel').value);
+    const tBackEnamel = parseFloat(document.getElementById('backEnamel').value);
+    const fMat = document.getElementById('faceMat').value;
+    const bMat = document.getElementById('backMat').value;
+
+    const tFaceTotal = getTotalSheetThickness(fMat, tFaceSteel, tFaceEnamel);
+    const tBackTotal = getTotalSheetThickness(bMat, tBackSteel, tBackEnamel);
+    const tCore = getCoreThickness();
+    const tGlue = 0.3;
+
+    const coreType = document.getElementById('coreType').value;
+    const coreDef = coreTypes[coreType];
+    const edgeMode = document.getElementById('edgeToggle').dataset.mode || 'open';
+
+    const totalThick = tFaceTotal + tBackTotal + tCore;
+    const areaM2 = (wX * lZ) / 1000000;
+    document.getElementById('hudTotalThick').innerText = `${totalThick.toFixed(2)} мм`;
+    document.getElementById('hudArea').innerText = `${areaM2.toFixed(3)} м²`;
+
+    let wFace, wBack;
+    if (fMat === 'enameled') {
+        wFace = materialSpecs.enameled.density * (tFaceSteel / 1000) + materialSpecs.enameled.enamelDensity * (2 * tFaceEnamel / 1000);
+    } else {
+        wFace = materialSpecs[fMat].density * (tFaceTotal / 1000);
+    }
+    if (bMat === 'enameled') {
+        wBack = materialSpecs.enameled.density * (tBackSteel / 1000) + materialSpecs.enameled.enamelDensity * (2 * tBackEnamel / 1000);
+    } else {
+        wBack = materialSpecs[bMat].density * (tBackTotal / 1000);
+    }
+
+    let wCoreUnit = 0;
+    if (coreType === 'honeycomb') {
+        const cellSize = parseFloat(document.querySelector('#cellSizeGroup button.active').dataset.value);
+        const foilThick = parseFloat(document.getElementById('foilThickness').value);
+        wCoreUnit = (tCore / 20) * (foilThick / 0.05) * (9.5 / cellSize) * 1.65;
+    } else {
+        wCoreUnit = coreDef.density * (tCore / 1000);
+    }
+    const wTotalM2 = wFace + wBack + wCoreUnit + 0.6;
+    const wSample = wTotalM2 * areaM2;
+    document.getElementById('hudWeight').innerText = `${wSample.toFixed(2)} / ${wTotalM2.toFixed(2)} кг`;
+
+    const faceFireOk = materialSpecs[fMat].fireOk;
+    const backFireOk = materialSpecs[bMat].fireOk;
+    const coreFireOk = coreDef.fireOk;
+    const allOk = faceFireOk && backFireOk && coreFireOk;
+    const fireBadge = document.getElementById('hudFire');
+    if (allOk) {
+        fireBadge.innerHTML = `<span class="hud-badge green"><span class="dot"></span>КМ0 / НГ</span>`;
+    } else {
+        let worstClass = "КМ?";
+        if (!coreFireOk) worstClass = coreDef.fireClass;
+        else if (!faceFireOk || !backFireOk) worstClass = "Г2";
+        fireBadge.innerHTML = `<span class="hud-badge amber"><span class="dot"></span>${worstClass}</span>`;
+    }
+
+    const lambdaFace = materialSpecs[fMat].lambda;
+    const lambdaBack = materialSpecs[bMat].lambda;
+    const Rface = (tFaceTotal / 1000) / lambdaFace;
+    const Rback = (tBackTotal / 1000) / lambdaBack;
+    const Rcore = (tCore / 1000) / coreDef.lambda;
+    const Rtotal = Rface + Rback + Rcore;
+    document.getElementById('hudR').innerText = `${Rtotal.toFixed(3)} м²·°C/Вт`;
+
+    let costPerM2;
+    if (fMat === 'enameled') {
+        costPerM2 = materialSpecs.enameled.costPerM2PerMm * tFaceSteel + 800 * (2 * tFaceEnamel);
+    } else {
+        costPerM2 = materialSpecs[fMat].costPerM2PerMm * tFaceTotal;
+    }
+    if (bMat === 'enameled') {
+        costPerM2 += materialSpecs.enameled.costPerM2PerMm * tBackSteel + 800 * (2 * tBackEnamel);
+    } else {
+        costPerM2 += materialSpecs[bMat].costPerM2PerMm * tBackTotal;
+    }
+    if (coreType === 'honeycomb') {
+        const cellSize = parseFloat(document.querySelector('#cellSizeGroup button.active').dataset.value);
+        const foilThick = parseFloat(document.getElementById('foilThickness').value);
+        costPerM2 += tCore * 90;
+        if (cellSize < 8) costPerM2 += 400;
+        costPerM2 *= (foilThick / 0.05);
+    } else {
+        costPerM2 += (tCore / 1000) * coreDef.baseCostPerM3;
+    }
+    if (edgeMode === 'closed') costPerM2 *= 1.15;
+    if (['aluminum', 'galvanized', 'enameled'].includes(fMat)) {
+        const selRal = ralPalette.find(r => r.code === document.getElementById('faceRal').value);
+        if (selRal) costPerM2 *= selRal.costFactor;
+    }
+    document.getElementById('hudCost').innerText = `${Math.round(costPerM2).toLocaleString('ru-RU')} ₽`;
+
+    const newCoreLabel = createTextSprite(coreDef.name);
+    annotations.core.material.map.dispose();
+    annotations.core.material = newCoreLabel.material;
+
+    const faceGeom = new THREE.BoxGeometry(wX, tFaceTotal, lZ);
+    faceMesh = new THREE.Mesh(faceGeom, layerMaterials.face);
+    faceMesh.castShadow = true; faceMesh.receiveShadow = true;
+    
+    const glue1Geom = new THREE.BoxGeometry(wX, tGlue, lZ);
+    glue1Mesh = new THREE.Mesh(glue1Geom, layerMaterials.glue);
+
+    const glue2Geom = new THREE.BoxGeometry(wX, tGlue, lZ);
+    glue2Mesh = new THREE.Mesh(glue2Geom, layerMaterials.glue);
+
+    const backGeom = new THREE.BoxGeometry(wX, tBackTotal, lZ);
+    backMesh = new THREE.Mesh(backGeom, layerMaterials.back);
+    backMesh.castShadow = true; backMesh.receiveShadow = true;
+
+    if (coreType === 'honeycomb') {
+        const cellSize = parseFloat(document.querySelector('#cellSizeGroup button.active').dataset.value);
+        const cellRadius = cellSize / 2;
+        const hexGeom = new THREE.CylinderGeometry(cellRadius, cellRadius, tCore, 6, 1, true);
+        const colSpacing = cellRadius * Math.sqrt(3);
+        const rowSpacing = cellRadius * 1.5;
+        const cols = Math.floor(wX / colSpacing) + 1;
+        const rows = Math.floor(lZ / rowSpacing) + 1;
+        coreMesh = new THREE.InstancedMesh(hexGeom, layerMaterials.core, cols * rows);
+        let instanceIdx = 0;
+        const dummy = new THREE.Object3D();
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                let xPos = (c * colSpacing) - (wX / 2);
+                let zPos = (r * rowSpacing) - (lZ / 2);
+                if (r % 2 === 1) xPos += colSpacing / 2;
+                if (Math.abs(xPos) < (wX/2 - cellRadius) && Math.abs(zPos) < (lZ/2 - cellRadius)) {
+                    dummy.position.set(xPos, 0, zPos);
+                    dummy.updateMatrix();
+                    coreMesh.setMatrixAt(instanceIdx++, dummy.matrix);
+                }
+            }
+        }
+        coreMesh.count = instanceIdx;
+        coreMesh.instanceMatrix.needsUpdate = true;
+    } else {
+        const coreGeom = new THREE.BoxGeometry(wX, tCore, lZ);
+        const coreMat = layerMaterials.core.clone();
+        coreMat.color.set(coreDef.color);
+        coreMat.metalness = coreDef.metalness;
+        coreMat.roughness = coreDef.roughness;
+        if (coreType === 'sml') { coreMat.bumpMap = smlBump; coreMat.bumpScale = 0.5; }
+        else if (coreType === 'mvp') { coreMat.bumpMap = mvpBump; coreMat.bumpScale = 0.6; }
+        coreMesh = new THREE.Mesh(coreGeom, coreMat);
+        coreMesh.castShadow = true;
+    }
+
+    panelGroup.add(faceMesh);
+    panelGroup.add(glue1Mesh);
+    panelGroup.add(coreMesh);
+    panelGroup.add(glue2Mesh);
+    panelGroup.add(backMesh);
+
+    if (edgeMode === 'closed' && coreType === 'honeycomb') {
+        const flangeH = tCore + tGlue * 2 + tBackTotal;
+        const flangeThick = tFaceTotal;
+        const flangeFront = new THREE.Mesh(new THREE.BoxGeometry(wX, flangeH, flangeThick), layerMaterials.flange);
+        flangeFront.position.set(0, -(flangeH/2 - tFaceTotal/2), lZ/2 - flangeThick/2);
+        flangeFront.castShadow = true;
+        panelGroup.add(flangeFront); edgeFlangeMeshes.push(flangeFront);
+        const flangeBack = new THREE.Mesh(new THREE.BoxGeometry(wX, flangeH, flangeThick), layerMaterials.flange);
+        flangeBack.position.set(0, -(flangeH/2 - tFaceTotal/2), -lZ/2 + flangeThick/2);
+        flangeBack.castShadow = true;
+        panelGroup.add(flangeBack); edgeFlangeMeshes.push(flangeBack);
+        const flangeLeft = new THREE.Mesh(new THREE.BoxGeometry(flangeThick, flangeH, lZ - flangeThick * 2), layerMaterials.flange);
+        flangeLeft.position.set(-wX/2 + flangeThick/2, -(flangeH/2 - tFaceTotal/2), 0);
+        flangeLeft.castShadow = true;
+        panelGroup.add(flangeLeft); edgeFlangeMeshes.push(flangeLeft);
+        const flangeRight = new THREE.Mesh(new THREE.BoxGeometry(flangeThick, flangeH, lZ - flangeThick * 2), layerMaterials.flange);
+        flangeRight.position.set(wX/2 - flangeThick/2, -(flangeH/2 - tFaceTotal/2), 0);
+        flangeRight.castShadow = true;
+        panelGroup.add(flangeRight); edgeFlangeMeshes.push(flangeRight);
+    }
+
+    updateLayerPositions();
+    updateValidation();
+    updateCompare();
+    updateLayersCount();
+}
+
+function updateLayerPositions() {
+    const explodeFactor = parseFloat(document.getElementById('explodeSlider').value);
+    const sep = explodeFactor * 1.2;
+
+    const fMat = document.getElementById('faceMat').value;
+    const bMat = document.getElementById('backMat').value;
+    const tFaceSteel = parseFloat(document.getElementById('faceThickness').value);
+    const tBackSteel = parseFloat(document.getElementById('backThickness').value);
+    const tFaceEnamel = parseFloat(document.getElementById('faceEnamel').value);
+    const tBackEnamel = parseFloat(document.getElementById('backEnamel').value);
+    const tFaceTotal = getTotalSheetThickness(fMat, tFaceSteel, tFaceEnamel);
+    const tBackTotal = getTotalSheetThickness(bMat, tBackSteel, tBackEnamel);
+    const tCore = getCoreThickness();
+    const tGlue = 0.3;
+
+    const coreY = 0;
+    const glue1Y = coreY + (tCore/2) + (tGlue/2) + (sep * 0.3);
+    const faceY = glue1Y + (tGlue/2) + (tFaceTotal/2) + (sep * 0.8);
+    const glue2Y = coreY - (tCore/2) - (tGlue/2) - (sep * 0.3);
+    const backY = glue2Y - (tGlue/2) - (tBackTotal/2) - (sep * 0.8);
+
+    if(faceMesh) faceMesh.position.y = faceY;
+    if(glue1Mesh) glue1Mesh.position.y = glue1Y;
+    if(coreMesh) coreMesh.position.y = coreY;
+    if(glue2Mesh) glue2Mesh.position.y = glue2Y;
+    if(backMesh) backMesh.position.y = backY;
+
+    edgeFlangeMeshes.forEach(m => {
+        if (!m.userData.baseY) m.userData.baseY = m.position.y;
+        m.position.y = m.userData.baseY + (faceY - tFaceTotal/2);
+    });
+
+    if(faceMesh) faceMesh.visible = document.getElementById('showFace').checked;
+    if(glue1Mesh) glue1Mesh.visible = document.getElementById('showGlue1').checked;
+    if(coreMesh) coreMesh.visible = document.getElementById('showCore').checked;
+    if(glue2Mesh) glue2Mesh.visible = document.getElementById('showGlue2').checked;
+    if(backMesh) backMesh.visible = document.getElementById('showBack').checked;
+    edgeFlangeMeshes.forEach(m => m.visible = document.getElementById('showFace').checked);
+
+    const wX = parseFloat(document.getElementById('widthInput').value) || 300;
+    const lineStartX = wX / 2;
+    const labelOffsetX = lineStartX + 80;
+
+    const updateAnnot = (key, targetY, visible) => {
+        if (visible && explodeFactor > 10) {
+            annotations[key].visible = true;
+            annotationLines[key].visible = true;
+            annotations[key].position.set(labelOffsetX + 80, targetY, 0);
+            const points = [new THREE.Vector3(lineStartX, targetY, 0), new THREE.Vector3(labelOffsetX, targetY, 0)];
+            annotationLines[key].geometry.dispose();
+            annotationLines[key].geometry = new THREE.BufferGeometry().setFromPoints(points);
+            annotationLines[key].material.opacity = Math.min(1, (explodeFactor - 10) / 40);
+        } else {
+            annotations[key].visible = false;
+            annotationLines[key].visible = false;
+        }
+    };
+    updateAnnot('face', faceY, document.getElementById('showFace').checked);
+    updateAnnot('glue1', glue1Y, document.getElementById('showGlue1').checked);
+    updateAnnot('core', coreY, document.getElementById('showCore').checked);
+    updateAnnot('glue2', glue2Y, document.getElementById('showGlue2').checked);
+    updateAnnot('back', backY, document.getElementById('showBack').checked);
+}
+
+// ============================================================
+// VALIDATION
+// ============================================================
+function updateValidation() {
+    const wX = parseFloat(document.getElementById('widthInput').value) || 300;
+    const lZ = parseFloat(document.getElementById('lengthInput').value) || 400;
+    const coreType = document.getElementById('coreType').value;
+    const tCore = getCoreThickness();
+    const fMat = document.getElementById('faceMat').value;
+    const bMat = document.getElementById('backMat').value;
+    const tFaceSteel = parseFloat(document.getElementById('faceThickness').value);
+    const tFaceEnamel = parseFloat(document.getElementById('faceEnamel').value);
+    const tFaceTotal = getTotalSheetThickness(fMat, tFaceSteel, tFaceEnamel);
+
+    const warnings = [];
+    const ratio = Math.max(wX, lZ) / Math.min(wX, lZ);
+    if (ratio > 4) warnings.push({ level: 'warn', text: `Соотношение сторон ${ratio.toFixed(1)}:1 — риск коробления` });
+    if (coreType === 'honeycomb' && tCore > 80) warnings.push({ level: 'warn', text: 'Толщина ядра > 80мм — рекомендуется ХЦП/СМЛ' });
+    if (coreType === 'pir') warnings.push({ level: 'danger', text: 'PIR-плита: КМ1/Г1 — не для объектов с НГ' });
+    if ((fMat === 'hpl' || bMat === 'hpl') && coreType === 'pir') warnings.push({ level: 'danger', text: 'PIR + HPL = КМ4 — критическое ограничение' });
+    if (tFaceTotal < 0.7 && Math.max(wX, lZ) > 1000) warnings.push({ level: 'warn', text: 'Тонкий лист при больших габаритах' });
+
+    const bar = document.getElementById('validationBar');
+    const icon = document.getElementById('validationIcon');
+    const text = document.getElementById('validationText');
+
+    if (warnings.length === 0) {
+        bar.className = 'validation-bar ok';
+        icon.textContent = '✅';
+        text.textContent = 'Конфигурация оптимальна';
+    } else {
+        const worst = warnings.reduce((a, b) => a.level === 'danger' ? a : b, warnings[0]);
+        bar.className = `validation-bar ${worst.level}`;
+        icon.textContent = worst.level === 'danger' ? '🔴' : '⚠️';
+        text.textContent = warnings.map(w => w.text).join(' • ');
+    }
+}
+
+// ============================================================
+// COMPARE A/B
+// ============================================================
+let slotA = null;
+
+function describeCurrentConfig() {
+    const fMat = document.getElementById('faceMat').value;
+    const bMat = document.getElementById('backMat').value;
+    const coreType = document.getElementById('coreType').value;
+    const tFaceSteel = parseFloat(document.getElementById('faceThickness').value);
+    const tBackSteel = parseFloat(document.getElementById('backThickness').value);
+    const tFaceEnamel = parseFloat(document.getElementById('faceEnamel').value);
+    const tBackEnamel = parseFloat(document.getElementById('backEnamel').value);
+    const tFaceTotal = getTotalSheetThickness(fMat, tFaceSteel, tFaceEnamel);
+    const tBackTotal = getTotalSheetThickness(bMat, tBackSteel, tBackEnamel);
+    const tCore = getCoreThickness();
+    
+    if (!materialSpecs[fMat] || !materialSpecs[bMat]) {
+        return { name: 'Пользовательский', composition: 'Некорректные данные' };
+    }
+    
+    const presetName = findMatchingPreset();
+    
+    let faceDesc = materialSpecs[fMat].label;
+    if (fMat === 'enameled') faceDesc += ` ${tFaceSteel}+2×${tFaceEnamel}`;
+    else faceDesc += ` ${tFaceTotal}`;
+    
+    let backDesc = materialSpecs[bMat].label;
+    if (bMat === 'enameled') backDesc += ` ${tBackSteel}+2×${tBackEnamel}`;
+    else backDesc += ` ${tBackTotal}`;
+    
+    const coreShort = coreTypes[coreType].name.split(' ')[0];
+    
+    return {
+        name: presetName,
+        composition: `${faceDesc} + ${coreShort} ${tCore} + ${backDesc}`
+    };
+}
+
+function findMatchingPreset() {
+    const fMat = document.getElementById('faceMat').value;
+    const bMat = document.getElementById('backMat').value;
+    const coreType = document.getElementById('coreType').value;
+    
+    for (const p of presets) {
+        if (p.isSlot || !p.config) continue;
+        const c = p.config;
+        if (c.faceMat === fMat && c.backMat === bMat && c.coreType === coreType) {
+            return p.name;
+        }
+    }
+    return 'Пользовательский';
+}
+
+function captureState() {
+    return {
+        weight: document.getElementById('hudWeight').innerText,
+        rValue: parseFloat(document.getElementById('hudR').innerText),
+        cost: parseInt(document.getElementById('hudCost').innerText.replace(/\s|₽/g, '')),
+        fire: document.getElementById('hudFire').innerText,
+        description: describeCurrentConfig()
+    };
+}
+
+function updateCompare() {
+    if (!slotA) return;
+    const current = captureState();
+    const panel = document.getElementById('compareHud');
+    const content = document.getElementById('compareContent');
+    panel.classList.remove('hidden');
+    positionCompareHud();
+
+    const dWeight = parseFloat(current.weight.split('/')[1]) - parseFloat(slotA.weight.split('/')[1]);
+    const dCost = current.cost - slotA.cost;
+    const dR = current.rValue - slotA.rValue;
+    const pctWeight = slotA.weight.split('/')[1] !== '0.00' ? (dWeight / parseFloat(slotA.weight.split('/')[1]) * 100) : 0;
+    const pctCost = slotA.cost !== 0 ? (dCost / slotA.cost * 100) : 0;
+
+    const fmtDelta = (val, pct, betterDown) => {
+        const sign = val > 0 ? '+' : '';
+        const cls = (betterDown && val < 0) || (!betterDown && val > 0) ? 'better' : (val === 0 ? 'neutral' : 'worse');
+        return `<span class="compare-delta ${cls}">${sign}${pct.toFixed(1)}%</span>`;
+    };
+
+    content.innerHTML = `
+        <div class="compare-slot">
+            <div class="compare-slot-label">A: ${slotA.description.name}</div>
+            <div class="compare-slot-desc">${slotA.description.composition}</div>
+        </div>
+        <div class="compare-slot slot-b">
+            <div class="compare-slot-label">B: ${current.description.name}</div>
+            <div class="compare-slot-desc">${current.description.composition}</div>
+        </div>
+        <div class="compare-metrics">
+            <div class="compare-row">
+                <span class="compare-label">Масса, кг/м²:</span>
+                <div class="compare-values">
+                    <span class="compare-a">${parseFloat(slotA.weight.split('/')[1]).toFixed(2)}</span>
+                    <span class="compare-arrow">→</span>
+                    <span class="compare-b">${parseFloat(current.weight.split('/')[1]).toFixed(2)}</span>
+                    ${fmtDelta(dWeight, pctWeight, true)}
+                </div>
+            </div>
+            <div class="compare-row">
+                <span class="compare-label">Стоимость, ₽:</span>
+                <div class="compare-values">
+                    <span class="compare-a">${slotA.cost.toLocaleString('ru-RU')}</span>
+                    <span class="compare-arrow">→</span>
+                    <span class="compare-b">${current.cost.toLocaleString('ru-RU')}</span>
+                    ${fmtDelta(dCost, pctCost, true)}
+                </div>
+            </div>
+            <div class="compare-row">
+                <span class="compare-label">R, м²·°C/Вт:</span>
+                <div class="compare-values">
+                    <span class="compare-a">${slotA.rValue.toFixed(3)}</span>
+                    <span class="compare-arrow">→</span>
+                    <span class="compare-b">${current.rValue.toFixed(3)}</span>
+                    ${fmtDelta(dR, slotA.rValue !== 0 ? (dR / slotA.rValue * 100) : 0, false)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function positionCompareHud() {
+    const calcHud = document.getElementById('calcHud');
+    const compareHud = document.getElementById('compareHud');
+    const calcRect = calcHud.getBoundingClientRect();
+    const stageRect = document.querySelector('.stage-container').getBoundingClientRect();
+    compareHud.style.top = (calcRect.bottom - stageRect.top + 10) + 'px';
+}
+
+// ============================================================
+// UI SETUP
+// ============================================================
+const faceRalSel = document.getElementById('faceRal');
+const backRalSel = document.getElementById('backRal');
+const faceDecorSel = document.getElementById('faceDecor');
+const backDecorSel = document.getElementById('backDecor');
+
+function ArrayOption(val, text) {
+    const o = document.createElement('option'); o.value = val; o.text = text; return o;
+}
+ralPalette.forEach(p => {
+    faceRalSel.appendChild(ArrayOption(p.code, `${p.code} (${p.name})`));
+    backRalSel.appendChild(ArrayOption(p.code, `${p.code} (${p.name})`));
+});
+
+function populateDecorSelect(selectEl, palette) {
+    selectEl.innerHTML = '';
+    palette.forEach(d => selectEl.appendChild(ArrayOption(d.id, d.name)));
+}
+populateDecorSelect(faceDecorSel, hplDecorPalette);
+populateDecorSelect(backDecorSel, hplDecorPalette);
+
+// PRESETS
+const presetGrid = document.getElementById('presetGrid');
+let slot8Config = null;
+
+presets.forEach((p, idx) => {
+    const btn = document.createElement('div');
+    btn.className = 'preset-btn';
+    btn.dataset.idx = idx;
+    if (p.isSlot) {
+        btn.innerHTML = `<div class="preset-name">${p.name}</div><div class="preset-desc">${p.desc}</div>`;
+        btn.addEventListener('click', (e) => {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                slot8Config = null;
+                btn.classList.remove('saved');
+                btn.querySelector('.preset-desc').textContent = 'Нажмите, чтобы сохранить';
+                const ind = btn.querySelector('.save-indicator');
+                if (ind) ind.remove();
+            } else if (slot8Config) {
+                applyConfig(slot8Config);
+                playAssemblyAnimation();
+            } else {
+                slot8Config = captureFullState();
+                btn.classList.add('saved');
+                btn.querySelector('.preset-desc').textContent = describeConfig(slot8Config);
+                if (!btn.querySelector('.save-indicator')) {
+                    const ind = document.createElement('span');
+                    ind.className = 'save-indicator';
+                    ind.textContent = '💾';
+                    btn.appendChild(ind);
+                }
+            }
+        });
+    } else {
+        btn.innerHTML = `<div class="preset-name">${p.name}</div><div class="preset-desc">${p.desc}</div>`;
+        btn.addEventListener('click', () => {
+            applyConfig(p.config);
+            playAssemblyAnimation();
+        });
+    }
+    presetGrid.appendChild(btn);
+});
+
+function captureFullState() {
+    return {
+        faceMat: document.getElementById('faceMat').value,
+        faceThickness: parseFloat(document.getElementById('faceThickness').value),
+        faceEnamel: parseFloat(document.getElementById('faceEnamel').value),
+        faceHex: document.getElementById('faceHex').value,
+        faceRal: document.getElementById('faceRal').value,
+        faceFinish: getFinishValue('face'),
+        faceDecor: document.getElementById('faceDecor').value,
+        faceSSFinish: document.getElementById('faceSSFinish').value,
+        backMat: document.getElementById('backMat').value,
+        backThickness: parseFloat(document.getElementById('backThickness').value),
+        backEnamel: parseFloat(document.getElementById('backEnamel').value),
+        backHex: document.getElementById('backHex').value,
+        backRal: document.getElementById('backRal').value,
+        backFinish: getFinishValue('back'),
+        backDecor: document.getElementById('backDecor').value,
+        backSSFinish: document.getElementById('backSSFinish').value,
+        coreType: document.getElementById('coreType').value,
+        coreThickness: parseFloat(document.getElementById('coreThickness').value),
+        solidCoreThickness: parseFloat(document.getElementById('solidCoreThickness').value),
+        cellSize: document.querySelector('#cellSizeGroup button.active').dataset.value,
+        foilThickness: parseFloat(document.getElementById('foilThickness').value),
+        width: parseFloat(document.getElementById('widthInput').value),
+        length: parseFloat(document.getElementById('lengthInput').value)
+    };
+}
+
+function describeConfig(cfg) {
+    if (!cfg.faceMat || !materialSpecs[cfg.faceMat]) return 'Неизвестная конфигурация';
+    const fMat = materialSpecs[cfg.faceMat].label;
+    const bMat = materialSpecs[cfg.backMat] ? materialSpecs[cfg.backMat].label : '?';
+    const core = coreTypes[cfg.coreType].name.split(' ')[0];
+    const tCore = cfg.coreType === 'honeycomb' ? cfg.coreThickness : cfg.solidCoreThickness;
+    return `${fMat} ${cfg.faceThickness} + ${core} ${tCore} + ${bMat} ${cfg.backThickness}`;
+}
+
+function applyConfig(c) {
+    document.getElementById('faceMat').value = c.faceMat;
+    document.getElementById('faceThickness').value = c.faceThickness;
+    document.getElementById('faceThickVal').innerText = `${c.faceThickness} мм`;
+    if (c.faceEnamel !== undefined) {
+        document.getElementById('faceEnamel').value = c.faceEnamel;
+        document.getElementById('faceEnamelVal').innerText = `${parseFloat(c.faceEnamel).toFixed(2)} мм`;
+    }
+    document.getElementById('backMat').value = c.backMat;
+    document.getElementById('backThickness').value = c.backThickness;
+    document.getElementById('backThickVal').innerText = `${c.backThickness} мм`;
+    if (c.backEnamel !== undefined) {
+        document.getElementById('backEnamel').value = c.backEnamel;
+        document.getElementById('backEnamelVal').innerText = `${parseFloat(c.backEnamel).toFixed(2)} мм`;
+    }
+    document.getElementById('coreType').value = c.coreType;
+    if (c.coreThickness !== undefined) {
+        document.getElementById('coreThickness').value = c.coreThickness;
+        document.getElementById('coreThickVal').innerText = `${c.coreThickness} мм`;
+    }
+    if (c.solidCoreThickness !== undefined) {
+        document.getElementById('solidCoreThickness').value = c.solidCoreThickness;
+        document.getElementById('solidCoreThickVal').innerText = `${c.solidCoreThickness} мм`;
+    }
+    if (c.cellSize) {
+        document.querySelectorAll('#cellSizeGroup button').forEach(b => b.classList.toggle('active', b.dataset.value === c.cellSize));
+    }
+    if (c.foilThickness !== undefined) {
+        document.getElementById('foilThickness').value = c.foilThickness;
+        document.getElementById('foilThickVal').innerText = `${c.foilThickness} мм`;
+    }
+    document.getElementById('widthInput').value = c.width;
+    document.getElementById('widthSlider').value = Math.min(c.width, 500);
+    document.getElementById('widthVal').innerText = `${c.width} мм`;
+    document.getElementById('lengthInput').value = c.length;
+    document.getElementById('lengthSlider').value = Math.min(c.length, 500);
+    document.getElementById('lengthVal').innerText = `${c.length} мм`;
+    if (c.faceHex) document.getElementById('faceHex').value = c.faceHex;
+    if (c.faceRal) document.getElementById('faceRal').value = c.faceRal;
+    if (c.faceDecor) document.getElementById('faceDecor').value = c.faceDecor;
+    if (c.faceSSFinish) document.getElementById('faceSSFinish').value = c.faceSSFinish;
+    if (c.backHex) document.getElementById('backHex').value = c.backHex;
+    if (c.backRal) document.getElementById('backRal').value = c.backRal;
+    if (c.backDecor) document.getElementById('backDecor').value = c.backDecor;
+    if (c.backSSFinish) document.getElementById('backSSFinish').value = c.backSSFinish;
+
+    // Установка состояния toggle-кнопок поверхности
+    if (c.faceFinish) {
+        document.querySelectorAll('#faceFinishBtns button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === c.faceFinish);
+        });
+    }
+    if (c.backFinish) {
+        document.querySelectorAll('#backFinishBtns button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === c.backFinish);
+        });
+    }
+
+    toggleMaterialContext(c.faceMat, 'face');
+    toggleMaterialContext(c.backMat, 'back');
+    updateCoreUI();
+    updateMaterials();
+    rebuildPanelGeometry();
+}
+
+// Accordion
+document.querySelectorAll('.acc-header').forEach(header => {
+    header.addEventListener('click', () => {
+        header.parentElement.classList.toggle('open');
+    });
+});
+
+// Theme
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    themeToggle.textContent = next === 'dark' ? '☀' : '🌙';
+});
+
+// Material context
+function toggleMaterialContext(matType, prefix) {
+    document.getElementById(`${prefix}RalGroup`).classList.add('hidden');
+    document.getElementById(`${prefix}SSGroup`).classList.add('hidden');
+    document.getElementById(`${prefix}DecorGroup`).classList.add('hidden');
+    document.getElementById(`${prefix}EnamelGroup`).classList.add('hidden');
+    document.getElementById(`${prefix}FinishGroup`).classList.add('hidden');
+
+    if (matType === 'aluminum' || matType === 'galvanized' || matType === 'enameled') {
+        document.getElementById(`${prefix}RalGroup`).classList.remove('hidden');
+        document.getElementById(`${prefix}FinishGroup`).classList.remove('hidden');
+        if (matType === 'enameled') document.getElementById(`${prefix}EnamelGroup`).classList.remove('hidden');
+    } else if (matType === 'steel') {
+        document.getElementById(`${prefix}SSGroup`).classList.remove('hidden');
+    } else if (matType === 'hpl' || matType === 'ceramic') {
+        document.getElementById(`${prefix}DecorGroup`).classList.remove('hidden');
+        const decorSel = document.getElementById(`${prefix}Decor`);
+        if (matType === 'hpl') populateDecorSelect(decorSel, hplDecorPalette);
+        else populateDecorSelect(decorSel, ceramicDecorPalette);
+    }
+}
+
+function setupMaterialChange(matSelectId, prefix) {
+    document.getElementById(matSelectId).addEventListener('change', (e) => {
+        toggleMaterialContext(e.target.value, prefix);
+        updateMaterials();
+        rebuildPanelGeometry();
+    });
+}
+setupMaterialChange('faceMat', 'face');
+setupMaterialChange('backMat', 'back');
+
+function setupColorSync(ralSelectId, hexInputId) {
+    const ralSel = document.getElementById(ralSelectId);
+    const hexIn = document.getElementById(hexInputId);
+    ralSel.addEventListener('change', (e) => {
+        const selected = ralPalette.find(r => r.code === e.target.value);
+        if (selected && selected.code !== "CUSTOM") hexIn.value = selected.hex;
+        updateMaterials(); rebuildPanelGeometry();
+    });
+    hexIn.addEventListener('input', () => { ralSel.value = "CUSTOM"; updateMaterials(); rebuildPanelGeometry(); });
+}
+setupColorSync('faceRal', 'faceHex');
+setupColorSync('backRal', 'backHex');
+
+// Toggle-кнопки поверхности
+function setupFinishToggle(btnGroupId) {
+    const btnGroup = document.getElementById(btnGroupId);
+    const buttons = btnGroup.querySelectorAll('button');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateMaterials();
+            rebuildPanelGeometry();
+        });
+    });
+}
+setupFinishToggle('faceFinishBtns');
+setupFinishToggle('backFinishBtns');
+
+['faceSSFinish', 'faceDecor', 'backSSFinish', 'backDecor'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => { updateMaterials(); rebuildPanelGeometry(); });
+});
+
+// Core type
+const coreTypeSel = document.getElementById('coreType');
+const honeycombParams = document.getElementById('honeycombParams');
+const solidCoreParams = document.getElementById('solidCoreParams');
+const coreInfo = document.getElementById('coreInfo');
+const solidCoreSlider = document.getElementById('solidCoreThickness');
+const solidCoreThickVal = document.getElementById('solidCoreThickVal');
+
+function updateCoreUI() {
+    const ct = coreTypeSel.value;
+    const def = coreTypes[ct];
+    
+    if (ct === 'honeycomb') {
+        honeycombParams.classList.remove('hidden');
+        solidCoreParams.classList.add('hidden');
+        document.getElementById('edgeToggle').disabled = false;
+    } else {
+        honeycombParams.classList.add('hidden');
+        solidCoreParams.classList.remove('hidden');
+        document.getElementById('edgeToggle').disabled = true;
+        const edgeToggle = document.getElementById('edgeToggle');
+        if (edgeToggle.dataset.mode === 'closed') {
+            edgeToggle.dataset.mode = 'open';
+            edgeToggle.innerHTML = '🔧 Открытый торец';
+            edgeToggle.classList.remove('active');
+        }
+        solidCoreSlider.min = def.minThick;
+        solidCoreSlider.max = def.maxThick;
+        let currentVal = parseFloat(solidCoreSlider.value);
+        if (currentVal < def.minThick || currentVal > def.maxThick) {
+            solidCoreSlider.value = def.defaultThick;
+            solidCoreThickVal.innerText = `${def.defaultThick} мм`;
+        } else {
+            solidCoreThickVal.innerText = `${currentVal} мм`;
+        }
+    }
+    coreInfo.innerText = def.info;
+}
+coreTypeSel.addEventListener('change', () => { updateCoreUI(); rebuildPanelGeometry(); });
+
+// Edge toggle
+const edgeToggle = document.getElementById('edgeToggle');
+edgeToggle.dataset.mode = 'open';
+edgeToggle.addEventListener('click', () => {
+    if (edgeToggle.disabled) return;
+    const currentMode = edgeToggle.dataset.mode;
+    const newMode = currentMode === 'open' ? 'closed' : 'open';
+    edgeToggle.dataset.mode = newMode;
+    if (newMode === 'open') {
+        edgeToggle.innerHTML = '🔧 Открытый торец';
+        edgeToggle.classList.remove('active');
+    } else {
+        edgeToggle.innerHTML = '📦 Закрытый торец';
+        edgeToggle.classList.add('active');
+    }
+    rebuildPanelGeometry();
+});
+
+// Sliders sync
+function setupSizingSync(sliderId, inputId, valIndicatorId, maxLimit) {
+    const slider = document.getElementById(sliderId);
+    const input = document.getElementById(inputId);
+    const indicator = document.getElementById(valIndicatorId);
+    slider.addEventListener('input', (e) => { input.value = e.target.value; indicator.innerText = `${e.target.value} мм`; rebuildPanelGeometry(); });
+    input.addEventListener('change', (e) => {
+        let val = parseFloat(e.target.value);
+        if (isNaN(val) || val < 100) val = 100;
+        if (val > maxLimit) val = maxLimit;
+        e.target.value = val; indicator.innerText = `${val} мм`;
+        slider.value = Math.min(val, 500);
+        rebuildPanelGeometry();
+    });
+}
+setupSizingSync('widthSlider', 'widthInput', 'widthVal', 1500);
+setupSizingSync('lengthSlider', 'lengthInput', 'lengthVal', 6000);
+
+const setupSimpleSlider = (id, indId, suffix) => {
+    const s = document.getElementById(id); const ind = document.getElementById(indId);
+    s.addEventListener('input', (e) => { ind.innerText = `${e.target.value} ${suffix}`; rebuildPanelGeometry(); });
+};
+setupSimpleSlider('faceThickness', 'faceThickVal', 'мм');
+setupSimpleSlider('backThickness', 'backThickVal', 'мм');
+setupSimpleSlider('coreThickness', 'coreThickVal', 'мм');
+setupSimpleSlider('foilThickness', 'foilThickVal', 'мм');
+setupSimpleSlider('solidCoreThickness', 'solidCoreThickVal', 'мм');
+setupSimpleSlider('faceEnamel', 'faceEnamelVal', 'мм');
+setupSimpleSlider('backEnamel', 'backEnamelVal', 'мм');
+
+document.getElementById('explodeSlider').addEventListener('input', (e) => {
+    document.getElementById('explodeVal').innerText = `${e.target.value}%`;
+    updateLayerPositions();
+});
+
+document.querySelectorAll('#cellSizeGroup button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#cellSizeGroup button').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        rebuildPanelGeometry();
+    });
+});
+
+// Layers dropdown
+const layersBtn = document.getElementById('layersBtn');
+const layersPopover = document.getElementById('layersPopover');
+const layerCheckboxes = ['showFace', 'showGlue1', 'showCore', 'showGlue2', 'showBack'];
+
+layersBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    layersPopover.classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+    if (!layersPopover.contains(e.target) && e.target !== layersBtn) {
+        layersPopover.classList.remove('open');
+    }
+});
+
+function updateLayersCount() {
+    const checked = layerCheckboxes.filter(id => document.getElementById(id).checked).length;
+    document.getElementById('layersCount').textContent = `${checked}/5`;
+}
+
+layerCheckboxes.forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+        updateLayerPositions();
+        updateLayersCount();
+    });
+});
+
+document.getElementById('layersShowAll').addEventListener('click', () => {
+    layerCheckboxes.forEach(id => document.getElementById(id).checked = true);
+    updateLayerPositions();
+    updateLayersCount();
+});
+
+document.getElementById('layersHideAll').addEventListener('click', () => {
+    layerCheckboxes.forEach(id => document.getElementById(id).checked = false);
+    updateLayerPositions();
+    updateLayersCount();
+});
+
+// Compare
+document.getElementById('compareBtn').addEventListener('click', () => {
+    slotA = captureState();
+    document.getElementById('compareClear').classList.remove('hidden');
+    updateCompare();
+});
+document.getElementById('compareClear').addEventListener('click', () => {
+    slotA = null;
+    document.getElementById('compareHud').classList.add('hidden');
+    document.getElementById('compareClear').classList.add('hidden');
+});
+document.getElementById('compareClose').addEventListener('click', () => {
+    slotA = null;
+    document.getElementById('compareHud').classList.add('hidden');
+    document.getElementById('compareClear').classList.add('hidden');
+});
+
+// ============================================================
+// CAMERA VIEWS
+// ============================================================
+const cameraViews = {
+    '3d': { pos: [400, 350, 500], target: [0, 0, 0] },
+    'iso': { pos: [500, 500, 500], target: [0, 0, 0] },
+    'top': { pos: [0, 800, 0.1], target: [0, 0, 0] },
+    'side': { pos: [800, 100, 0], target: [0, 0, 0] }
+};
+
+function animateCamera(targetPos, targetLookAt, duration = 800) {
+    const startPos = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const endPos = new THREE.Vector3(...targetPos);
+    const endTarget = new THREE.Vector3(...targetLookAt);
+    const startTime = performance.now();
+    function step(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        camera.position.lerpVectors(startPos, endPos, ease);
+        controls.target.lerpVectors(startTarget, endTarget, ease);
+        controls.update();
+        if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        const view = cameraViews[e.target.dataset.view];
+        animateCamera(view.pos, view.target);
+    });
+});
+
+// ============================================================
+// ROTATION TOGGLE
+// ============================================================
+let autoRotateEnabled = true;
+const rotateToggle = document.getElementById('rotateToggle');
+rotateToggle.addEventListener('click', () => {
+    autoRotateEnabled = !autoRotateEnabled;
+    rotateToggle.textContent = autoRotateEnabled ? '⏸' : '▶';
+    rotateToggle.classList.toggle('paused', !autoRotateEnabled);
+});
+
+// ============================================================
+// LIGHTING SCENARIOS
+// ============================================================
+function setScene(mode) {
+    scene.remove(studioLights); scene.remove(streetLights); scene.remove(interiorLights);
+    shadowPlane.visible = false;
+    scene.fog = null;
+
+    if (mode === 'studio') {
+        scene.add(studioLights);
+        renderer.toneMappingExposure = 1.05;
+        scene.environment = envMaps.studio;
+        scene.background = backgrounds.studio;
+    } else if (mode === 'street') {
+        scene.add(streetLights);
+        renderer.toneMappingExposure = 1.1;
+        scene.environment = envMaps.street;
+        scene.background = backgrounds.street;
+        shadowPlane.visible = true;
+        scene.fog = streetFog;
+    } else if (mode === 'interior') {
+        scene.add(interiorLights);
+        renderer.toneMappingExposure = 1.0;
+        scene.environment = envMaps.interior;
+        scene.background = backgrounds.interior;
+    }
+}
+
+document.querySelectorAll('.light-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.light-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        setScene(e.target.dataset.scene);
+    });
+});
+
+// ============================================================
+// ASSEMBLY ANIMATION
+// ============================================================
+function playAssemblyAnimation() {
+    document.getElementById('explodeSlider').value = 100;
+    document.getElementById('explodeVal').innerText = '100%';
+    updateLayerPositions();
+
+    const startTime = performance.now();
+    const duration = 2500;
+    function step(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const explode = 100 * (1 - t);
+        document.getElementById('explodeSlider').value = explode;
+        document.getElementById('explodeVal').innerText = `${Math.round(explode)}%`;
+        updateLayerPositions();
+        panelGroup.rotation.y += 0.01;
+        if (t < 1) requestAnimationFrame(step);
+        else {
+            document.getElementById('explodeSlider').value = 0;
+            document.getElementById('explodeVal').innerText = '0%';
+            updateLayerPositions();
+        }
+    }
+    requestAnimationFrame(step);
+}
+document.getElementById('animateAssembly').addEventListener('click', playAssemblyAnimation);
+
+// ============================================================
+// EXPORT — ИСПРАВЛЕНО
+// ============================================================
+function getSpecificationData() {
+    const wX = parseFloat(document.getElementById('widthInput').value) || 300;
+    const lZ = parseFloat(document.getElementById('lengthInput').value) || 400;
+    const fMat = document.getElementById('faceMat').value;
+    const bMat = document.getElementById('backMat').value;
+    
+    // Защита от невалидных значений
+    if (!materialSpecs[fMat] || !materialSpecs[bMat]) {
+        console.error('Invalid material:', fMat, bMat);
+        return null;
+    }
+    
+    const tFaceSteel = parseFloat(document.getElementById('faceThickness').value);
+    const tBackSteel = parseFloat(document.getElementById('backThickness').value);
+    const tFaceEnamel = parseFloat(document.getElementById('faceEnamel').value);
+    const tBackEnamel = parseFloat(document.getElementById('backEnamel').value);
+    const tFaceTotal = getTotalSheetThickness(fMat, tFaceSteel, tFaceEnamel);
+    const tBackTotal = getTotalSheetThickness(bMat, tBackSteel, tBackEnamel);
+    const tCore = getCoreThickness();
+    const coreType = document.getElementById('coreType').value;
+    const coreDef = coreTypes[coreType];
+
+    return {
+        configId: currentConfigId,
+        width: wX, length: lZ,
+        faceMat: fMat,  // ИСПРАВЛЕНО: было faceMat (undefined)
+        backMat: bMat,  // ИСПРАВЛЕНО: было backMat (undefined)
+        faceSteel: tFaceSteel, faceEnamel: tFaceEnamel, faceTotal: tFaceTotal,
+        backSteel: tBackSteel, backEnamel: tBackEnamel, backTotal: tBackTotal,
+        coreType, coreName: coreDef.name, coreThickness: tCore,
+        totalThick: parseFloat(document.getElementById('hudTotalThick').innerText),
+        area: parseFloat(document.getElementById('hudArea').innerText),
+        weight: document.getElementById('hudWeight').innerText,
+        rValue: document.getElementById('hudR').innerText,
+        fire: document.getElementById('hudFire').innerText.replace(/[^\wа-яА-ЯЁё\/ ]/g, '').trim(),
+        cost: document.getElementById('hudCost').innerText
+    };
+}
+
+document.getElementById('exportCsv').addEventListener('click', () => {
+    try {
+        const d = getSpecificationData();
+        if (!d) {
+            alert('Ошибка: некорректные данные конфигурации');
+            return;
+        }
+        const rows = [
+            ['ZSMK Panel Specification'],
+            ['ID', d.configId],
+            ['Дата', new Date().toLocaleString('ru-RU')],
+            [''],
+            ['ГАБАРИТЫ'],
+            ['Длина, мм', d.length],
+            ['Ширина, мм', d.width],
+            ['Площадь, м²', d.area],
+            [''],
+            ['СЛОИ'],
+            ['Лицевой лист', materialSpecs[d.faceMat].label, `Сталь: ${d.faceSteel} мм`, d.faceMat === 'enameled' ? `Эмаль: 2×${d.faceEnamel} мм` : '', `Итого: ${d.faceTotal} мм`],
+            ['Ядро', d.coreName, `Толщина: ${d.coreThickness} мм`],
+            ['Тыльный лист', materialSpecs[d.backMat].label, `Сталь: ${d.backSteel} мм`, d.backMat === 'enameled' ? `Эмаль: 2×${d.backEnamel} мм` : '', `Итого: ${d.backTotal} мм`],
+            [''],
+            ['ПАРАМЕТРЫ'],
+            ['Общая толщина, мм', d.totalThick],
+            ['Масса (образец / м²)', d.weight],
+            ['Теплосопротивление R', d.rValue],
+            ['Пожарный класс', d.fire],
+            ['Стоимость за м²', d.cost]
+        ];
+        const csv = rows.map(r => r.join(';')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `zsmk_spec_${d.configId}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('CSV generation error:', err);
+        alert('Ошибка генерации CSV: ' + err.message);
+    }
+});
+
+// ============================================================
+// EXPORT PDF
+// ============================================================
+function drawSvgDrawing(container, d) {
+    const scale = 0.25;
+    const w = d.width * scale;
+    const h = d.length * scale;
+    const svgW = 600, svgH = 200;
+    const cx = svgW / 2, cy = svgH / 2;
+    
+    const svg = `
+    <svg width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, sans-serif;">
+        <rect x="${cx - w/2}" y="${cy - h/2}" width="${w}" height="${h}" fill="#f8fafc" stroke="#1e293b" stroke-width="2"/>
+        <line x1="${cx - w/2}" y1="${cy - h/2 - 15}" x2="${cx + w/2}" y2="${cy - h/2 - 15}" stroke="#2563eb" stroke-width="1"/>
+        <line x1="${cx - w/2}" y1="${cy - h/2 - 20}" x2="${cx - w/2}" y2="${cy - h/2 - 10}" stroke="#2563eb" stroke-width="1"/>
+        <line x1="${cx + w/2}" y1="${cy - h/2 - 20}" x2="${cx + w/2}" y2="${cy - h/2 - 10}" stroke="#2563eb" stroke-width="1"/>
+        <text x="${cx}" y="${cy - h/2 - 22}" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="600">${d.width} мм</text>
+        <line x1="${cx + w/2 + 15}" y1="${cy - h/2}" x2="${cx + w/2 + 15}" y2="${cy + h/2}" stroke="#2563eb" stroke-width="1"/>
+        <line x1="${cx + w/2 + 10}" y1="${cy - h/2}" x2="${cx + w/2 + 20}" y2="${cy - h/2}" stroke="#2563eb" stroke-width="1"/>
+        <line x1="${cx + w/2 + 10}" y1="${cy + h/2}" x2="${cx + w/2 + 20}" y2="${cy + h/2}" stroke="#2563eb" stroke-width="1"/>
+        <text x="${cx + w/2 + 25}" y="${cy + 4}" text-anchor="start" font-size="11" fill="#2563eb" font-weight="600">${d.length} мм</text>
+        <text x="${cx}" y="${cy + h/2 + 25}" text-anchor="middle" font-size="11" fill="#64748b">Общая толщина: ${d.totalThick} мм</text>
+        <g transform="translate(${cx - 80}, ${cy - 20})">
+            <text x="0" y="-5" font-size="9" fill="#64748b">Сечение A-A:</text>
+            <rect x="0" y="0" width="160" height="4" fill="#94a3b8" stroke="#1e293b" stroke-width="0.5"/>
+            <rect x="0" y="4" width="160" height="2" fill="#c5c9b8" opacity="0.6"/>
+            <rect x="0" y="6" width="160" height="${Math.min(d.coreThickness * 0.5, 20)}" fill="#d4d8dc" stroke="#1e293b" stroke-width="0.5"/>
+            <rect x="0" y="${6 + Math.min(d.coreThickness * 0.5, 20)}" width="160" height="2" fill="#c5c9b8" opacity="0.6"/>
+            <rect x="0" y="${8 + Math.min(d.coreThickness * 0.5, 20)}" width="160" height="3" fill="#94a3b8" stroke="#1e293b" stroke-width="0.5"/>
+        </g>
+    </svg>`;
+    
+    container.innerHTML = svg;
+}
+
+function generateQrCode(container, text) {
+    const size = 80;
+    const modules = 21;
+    const cellSize = size / modules;
+    
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+    }
+    
+    let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<rect width="${size}" height="${size}" fill="white"/>`;
+    
+    function drawFinder(x, y) {
+        svg += `<rect x="${x}" y="${y}" width="${cellSize*7}" height="${cellSize*7}" fill="black"/>`;
+        svg += `<rect x="${x+cellSize}" y="${y+cellSize}" width="${cellSize*5}" height="${cellSize*5}" fill="white"/>`;
+        svg += `<rect x="${x+cellSize*2}" y="${y+cellSize*2}" width="${cellSize*3}" height="${cellSize*3}" fill="black"/>`;
+    }
+    drawFinder(0, 0);
+    drawFinder((modules-7)*cellSize, 0);
+    drawFinder(0, (modules-7)*cellSize);
+    
+    let seed = Math.abs(hash);
+    for (let y = 0; y < modules; y++) {
+        for (let x = 0; x < modules; x++) {
+            if ((x < 8 && y < 8) || (x > modules-9 && y < 8) || (x < 8 && y > modules-9)) continue;
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+            if (seed % 3 === 0) {
+                svg += `<rect x="${x*cellSize}" y="${y*cellSize}" width="${cellSize}" height="${cellSize}" fill="black"/>`;
+            }
+        }
+    }
+    
+    svg += `</svg>`;
+    container.innerHTML = svg;
+}
+
+document.getElementById('exportPdf').addEventListener('click', async () => {
+    const btn = document.getElementById('exportPdf');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<span style="font-size:14px;">⏳</span><span>Генерация...</span>';
+    btn.disabled = true;
+    
+    try {
+        const d = getSpecificationData();
+        if (!d) {
+            alert('Ошибка: некорректные данные конфигурации');
+            return;
+        }
+        
+        document.getElementById('pdfConfigId').textContent = d.configId;
+        document.getElementById('pdfDate').textContent = new Date().toLocaleString('ru-RU');
+        document.getElementById('pdfDimensions').textContent = `${d.length} × ${d.width} мм`;
+        document.getElementById('pdfTotalThick').textContent = `${d.totalThick} мм`;
+        document.getElementById('pdfArea').textContent = `${d.area} м²`;
+        document.getElementById('pdfWeight').textContent = d.weight;
+        document.getElementById('pdfFire').textContent = d.fire;
+        document.getElementById('pdfR').textContent = d.rValue;
+        document.getElementById('pdfCost').textContent = d.cost;
+        
+        const layersBody = document.getElementById('pdfLayersBody');
+        layersBody.innerHTML = '';
+        
+        const faceDesc = d.faceMat === 'enameled' 
+            ? `${materialSpecs[d.faceMat].label}<br><small>Сталь ${d.faceSteel} мм + эмаль 2×${d.faceEnamel} мм</small>`
+            : materialSpecs[d.faceMat].label;
+        const backDesc = d.backMat === 'enameled'
+            ? `${materialSpecs[d.backMat].label}<br><small>Сталь ${d.backSteel} мм + эмаль 2×${d.backEnamel} мм</small>`
+            : materialSpecs[d.backMat].label;
+        
+        const layers = [
+            { name: 'Лицевой лист', material: faceDesc, thickness: `${d.faceTotal} мм`, density: `${materialSpecs[d.faceMat].density} кг/м³` },
+            { name: 'Клей*', material: 'Полиуретан PUR', thickness: '(0.3 мм)*', density: '—' },
+            { name: 'Ядро', material: d.coreName, thickness: `${d.coreThickness} мм`, density: `${coreTypes[d.coreType].density} кг/м³` },
+            { name: 'Клей*', material: 'Полиуретан PUR', thickness: '(0.3 мм)*', density: '—' },
+            { name: 'Тыльный лист', material: backDesc, thickness: `${d.backTotal} мм`, density: `${materialSpecs[d.backMat].density} кг/м³` }
+        ];
+        
+        layers.forEach(l => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${l.name}</td><td>${l.material}</td><td class="value-cell">${l.thickness}</td><td class="value-cell">${l.density}</td>`;
+            layersBody.appendChild(tr);
+        });
+        
+        drawSvgDrawing(document.getElementById('pdfDrawing'), d);
+        
+        const qrText = `ZSMK Configurator v3.05\nID: ${d.configId}\n${d.length}x${d.width}x${d.totalThick}mm\n${new Date().toISOString()}`;
+        generateQrCode(document.getElementById('pdfQr'), qrText);
+        
+        const template = document.getElementById('pdfTemplate');
+        template.style.left = '0';
+        template.style.top = '0';
+        template.style.position = 'fixed';
+        template.style.opacity = '0.01';
+        template.style.zIndex = '-1';
+        template.style.pointerEvents = 'none';
+        
+        await new Promise(resolve => setTimeout(resolve, 150));
+        
+        const canvas = await html2canvas(template, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        });
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = 210;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, 297));
+        pdf.save(`zsmk_spec_${d.configId}.pdf`);
+        
+        template.style.left = '-9999px';
+        template.style.opacity = '';
+        template.style.zIndex = '';
+    } catch (err) {
+        console.error('PDF generation error:', err);
+        alert('Ошибка генерации PDF: ' + err.message);
+        const template = document.getElementById('pdfTemplate');
+        template.style.left = '-9999px';
+        template.style.opacity = '';
+        template.style.zIndex = '';
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+});
+
+// ============================================================
+// RESIZE & RENDER
+// ============================================================
+function handleResize() {
+    const container = document.querySelector('.stage-container');
+    const w = container.clientWidth, h = container.clientHeight;
+    if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+    }
+    positionCompareHud();
+}
+window.addEventListener('resize', handleResize);
+
+let lastInteraction = 0;
+controls.addEventListener('start', () => { lastInteraction = Date.now(); });
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (autoRotateEnabled && Date.now() - lastInteraction > 3000) {
+        panelGroup.rotation.y += 0.0015;
+    }
+    renderer.render(scene, camera);
+}
+
+// START
+toggleMaterialContext('aluminum', 'face');
+toggleMaterialContext('aluminum', 'back');
+updateCoreUI();
+updateMaterials();
+updateLayersCount();
+setTimeout(() => {
+    handleResize();
+    rebuildPanelGeometry();
+    animate();
+    if (!localStorage.getItem('zsmk_intro_shown')) {
+        setTimeout(() => {
+            playAssemblyAnimation();
+            localStorage.setItem('zsmk_intro_shown', '1');
+        }, 500);
+    }
+}, 50);
+</script>
+</body>
+</html>
