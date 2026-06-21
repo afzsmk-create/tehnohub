@@ -79,10 +79,10 @@
             100% { background: rgba(220, 60, 50, 0.7); border-color: #ffaa00; }
         }
         .param-panel { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; background: #111c2b; border-radius: 1rem; padding: 0.7rem 1rem; margin-bottom: 0.8rem; border: 1px solid rgba(255,255,255,0.06); }
-        .param-item { display: flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.03); padding: 0.45rem 0.8rem; border-radius: 0.7rem; border: 1px solid transparent; }
+        .param-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; background: rgba(255,255,255,0.03); padding: 0.45rem 0.8rem; border-radius: 0.7rem; border: 1px solid transparent; }
         .param-icon { font-size: 1.1rem; opacity: 0.8; }
         .param-value { font-size: 1.1rem; font-weight: 600; color: #fff; }
-        .param-label { font-size: 0.6rem; text-transform: uppercase; color: #8b9bb5; margin-left: 0.2rem; }
+        .param-label { font-size: 0.6rem; text-transform: uppercase; color: #8b9bb5; }
         
         #resLength {
             color: #4ade80 !important;
@@ -214,21 +214,53 @@
     <div class="main-area">
         <div class="param-panel" id="results">
             <div class="param-item">
-                <span class="param-icon">🛠️</span>
-                <select id="resDieSelect" title="Нажмите, чтобы изменить матрицу вручную">
-                    <option value="10">V10</option>
-                    <option value="16">V16</option>
-                    <option value="22">V22</option>
-                    <option value="35">V35</option>
-                    <option value="50">V50</option>
-                </select>
-                <span class="param-label" style="margin-left:2px;">Матрица</span>
+                <span class="param-label">Матрица</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🛠️</span>
+                    <select id="resDieSelect" title="Нажмите, чтобы изменить матрицу вручную">
+                        <option value="10">V10</option>
+                        <option value="16">V16</option>
+                        <option value="22">V22</option>
+                        <option value="35">V35</option>
+                        <option value="50">V50</option>
+                    </select>
+                </div>
             </div>
-            <div class="param-item"><span class="param-icon">⭕</span><span class="param-value" id="resRadius">2.42</span><span class="param-label">Радиус Ri</span></div>
-            <div class="param-item"><span class="param-icon">📊</span><span class="param-value" id="resK">0.34</span><span class="param-label">K-фактор</span></div>
-            <div class="param-item"><span class="param-icon">➖</span><span class="param-value" id="resBD">2.51</span><span class="param-label">Σ BD, мм</span></div>
-            <div class="param-item" id="btnExportDxf" title="Скачать чертеж развёртки в формате DXF"><span class="param-icon">📋</span><span class="param-value" id="resLength">217.4</span><span class="param-label">Развёртка DXF</span></div>
-            <div class="param-item"><span class="param-icon">🏋️‍♂️</span><span class="param-value" id="resForce">0.0 т</span><span class="param-label">Усилие пресса</span></div>
+            <div class="param-item">
+                <span class="param-label">Радиус Ri</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">⭕</span>
+                    <span class="param-value" id="resRadius">2.42</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">K-фактор</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">📊</span>
+                    <span class="param-value" id="resK">0.34</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Σ BD, мм</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">➖</span>
+                    <span class="param-value" id="resBD">2.51</span>
+                </div>
+            </div>
+            <div class="param-item" id="btnExportDxf" title="Скачать чертеж развёртки в формате DXF">
+                <span class="param-label">Развёртка DXF</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">📋</span>
+                    <span class="param-value" id="resLength">217.4</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Усилие пресса</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🏋️‍♂️</span>
+                    <span class="param-value" id="resForce">0.0 т</span>
+                </div>
+            </div>
         </div>
         <div class="view-toggle">
             <button class="view-btn active" id="bentViewBtn">🔧 Согнутая деталь</button>
