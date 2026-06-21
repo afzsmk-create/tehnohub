@@ -42,7 +42,6 @@
         .nav-btn:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
         .nav-btn.active { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
 
-        /* Стили для скрытия неактивных кнопок */
         .btn-hidden {
             width: 0 !important;
             min-width: 0 !important;
@@ -89,22 +88,14 @@
 <body>
 
     <div class="top-nav">
-        <button onclick="switchTab('briket', this)" class="nav-btn active"><em data-lucide="layers" class="w-4 h-4"></em><span>Брикеты</span></button>
-        <button onclick="switchTab('cnc', this)" class="nav-btn">
-            <i data-lucide="cpu" class="w-4 h-4"></i><span>CoolSim</span>
-        </button>
-        <button onclick="switchTab('flow', this)" class="nav-btn">
-            <i data-lucide="timer" class="w-4 h-4"></i><span>PressFlow</span>
-        </button>
-        <button onclick="switchTab('matrix', this)" class="nav-btn">
-            <i data-lucide="gauge" class="w-4 h-4"></i><span>PressMatrix</span>
-        </button>
-        <button onclick="switchTab('aqua', this)" class="nav-btn">
-            <i data-lucide="droplets" class="w-4 h-4"></i><span>Гидрорезка</span>
-        </button>
-        <button onclick="switchTab('primecost', this)" class="nav-btn">
-            <i data-lucide="calculator" class="w-4 h-4"></i><span>Себестоимость</span>
-        </button>
+        <button onclick="switchTab('briket', this)" class="nav-btn active"><i data-lucide="layers" class="w-4 h-4"></i><span>Брикеты</span></button>
+        <button onclick="switchTab('cnc', this)" class="nav-btn"><i data-lucide="cpu" class="w-4 h-4"></i><span>CoolSim</span></button>
+        <button onclick="switchTab('flow', this)" class="nav-btn"><i data-lucide="timer" class="w-4 h-4"></i><span>PressFlow</span></button>
+        <button onclick="switchTab('matrix', this)" class="nav-btn"><i data-lucide="gauge" class="w-4 h-4"></i><span>PressMatrix</span></button>
+        <button onclick="switchTab('aqua', this)" class="nav-btn"><i data-lucide="droplets" class="w-4 h-4"></i><span>Гидрорезка</span></button>
+        <button onclick="switchTab('bender', this)" class="nav-btn"><i data-lucide="rotate-3d" class="w-4 h-4"></i><span>Гибка</span></button>
+        <button onclick="switchTab('primecost', this)" class="nav-btn"><i data-lucide="calculator" class="w-4 h-4"></i><span>Себестоимость</span></button>
+        <button onclick="switchTab('configurator', this)" class="nav-btn"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i><span>Конфигуратор</span></button>
     </div>
 
     <main>
@@ -123,18 +114,24 @@
         <div id="aqua" class="tab-content h-full hidden">
             <iframe src="AquaBlade.html"></iframe>
         </div>
+        <div id="bender" class="tab-content h-full hidden">
+            <iframe src="Bender.html"></iframe>
+        </div>
         <div id="primecost" class="tab-content h-full hidden">
             <iframe src="PrimeCost.html"></iframe>
+        </div>
+        <div id="configurator" class="tab-content h-full hidden">
+            <iframe src="panel_configurator.html"></iframe>
         </div>
     </main>
 
     <footer>
         <div class="auth-info">
-            <div class="digital-sig">ЗСМК ТехноХаб v1.4</div>
+            <div class="digital-sig">ЗСМК ТехноХаб v1.5</div>
             <div><span class="font-bold text-slate-400">АВТОР:</span> Фадеев А.Ю.</div>
             <div><span class="font-bold text-slate-400">ДОЛЖНОСТЬ:</span> Главный технолог ООО «ЗСМК»</div>
         </div>
-        <div class="text-[10px] font-mono text-slate-600 uppercase"> System Stable | 09.06.2026 </div>
+        <div class="text-[10px] font-mono text-slate-600 uppercase"> System Stable | 21.06.2026 </div>
     </footer>
 
     <script>
@@ -143,7 +140,6 @@
         const nav = document.querySelector('.top-nav');
         let collapseTimer;
 
-        // Функция сворачивания меню до активной кнопки
         function collapseMenu() {
             const buttons = nav.querySelectorAll('.nav-btn');
             buttons.forEach(btn => {
@@ -153,7 +149,6 @@
             });
         }
 
-        // Функция полного разворачивания меню
         function expandMenu() {
             const buttons = nav.querySelectorAll('.nav-btn');
             buttons.forEach(btn => {
@@ -161,50 +156,40 @@
             });
         }
 
-        // Запуск таймера сворачивания на 3 секунды
         function resetCollapseTimer() {
             clearTimeout(collapseTimer);
             collapseTimer = setTimeout(collapseMenu, 3000);
         }
 
-        // Инициализация: через 3 секунды после загрузки сворачиваем меню
         collapseTimer = setTimeout(collapseMenu, 3000);
 
-        // Наведение на панель меню — разворачиваем и сбрасываем таймер
         nav.addEventListener('mouseenter', () => {
             clearTimeout(collapseTimer);
             expandMenu();
         });
 
-        // Уход курсора с панели — запускаем таймер сворачивания
         nav.addEventListener('mouseleave', () => {
             resetCollapseTimer();
         });
 
         function switchTab(tabId, btn) {
-            // Скрываем все вкладки и убираем активность у всех кнопок
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             
-            // Активируем выбранную вкладку и кнопку
             const activeTab = document.getElementById(tabId);
             activeTab.classList.remove('hidden');
             btn.classList.add('active');
 
-            // Перезагрузка iframe для сброса состояний
             const iframe = activeTab.querySelector('iframe');
             if(iframe) {
                 iframe.src = iframe.src;
             }
 
-            // После клика разворачиваем меню и управляем таймером
             expandMenu();
             
-            // Если в данный момент мышь не над меню — запускаем таймер сворачивания
             if (!nav.matches(':hover')) {
                 resetCollapseTimer();
             } else {
-                // Иначе просто очищаем таймер, чтобы меню оставалось открытым под курсором
                 clearTimeout(collapseTimer);
             }
         }
