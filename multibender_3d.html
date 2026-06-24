@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -334,8 +336,8 @@
             <h1>Калькулятор гибки</h1>
             <div class="mode-toggle">
                 <a href="Bender.html" class="toggle-btn">Bender</a>
-                <span class="toggle-btn active">2D</span>
-                <a href="multibender_3d.html" class="toggle-btn">3D</a>
+                <a href="multibender.html" class="toggle-btn">2D</a>
+                <span class="toggle-btn active">3D</span>
             </div>
         </div>
         <div class="input-group">
@@ -465,7 +467,7 @@
             <button class="view-btn" id="flatViewBtn">📐 Развёртка</button>
         </div>
         <div class="canvas-wrapper" id="drawingArea">
-            <svg id="flatSvg" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet"></svg>
+            <canvas id="threeCanvas"></canvas>
             <div class="zoom-controls">
                 <button class="zoom-btn" id="zoomInBtn" title="Приблизить">＋</button>
                 <button class="zoom-btn" id="zoomOutBtn" title="Отдалить">－</button>
@@ -836,208 +838,296 @@
         let firstDrawDone = false;
         let resetViewOnSwitch = true;
 
-        const svg = document.getElementById('flatSvg');
-        const drawingArea = document.getElementById('drawingArea');
 
-        function applyTransform() {
-            const g = document.getElementById('mainGroup');
-            if (g) g.setAttribute('transform', `translate(${offsetX},${offsetY}) scale(${scale})`);
-            document.querySelectorAll('.dim-text').forEach(t => t.style.fontSize = (13/scale)+'px');
-            document.querySelectorAll('.bend-zone-text').forEach(t => t.style.fontSize = (10/scale)+'px');
+        
+        // ---------- THREE.JS 3D ВИЗУАЛИЗАЦИЯ ----------
+        let scene, camera, renderer, controls, partGroup;
+        let gridHelper;
+
+        function initThreeJS() {
+            const container = document.getElementById('drawingArea');
+            const canvas = document.getElementById('threeCanvas');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x060d16);
+            
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 10000);
+            camera.position.set(100, 80, 150);
+            
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = true;
+            controls.minDistance = 20;
+            controls.maxDistance = 500;
+            
+            const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(100, 200, 100);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+            
+            const fillLight = new THREE.DirectionalLight(0x6090ff, 0.3);
+            fillLight.position.set(-100, 50, -100);
+            scene.add(fillLight);
+            
+            gridHelper = new THREE.GridHelper(400, 40, 0x1a2a3a, 0x0d1520);
+            gridHelper.position.y = 0;
+            scene.add(gridHelper);
+            
+            partGroup = new THREE.Group();
+            scene.add(partGroup);
+            
+            window.addEventListener('resize', onWindowResize);
+            animate();
         }
-
-        function fitToView() {
-            const g = document.getElementById('mainGroup');
-            if (!g) return;
-            try {
-                const bbox = g.getBBox();
-                if (!bbox || bbox.width === 0 || bbox.height === 0) { scale=1; offsetX=0; offsetY=0; }
-                else {
-                    const pad = 0.75, W=800, H=300;
-                    scale = Math.min((W*pad)/bbox.width, (H*pad)/bbox.height, 2.5);
-                    offsetX = (W - bbox.width*scale)/2 - bbox.x*scale;
-                    offsetY = (H - bbox.height*scale)/2 - bbox.y*scale;
-                }
-            } catch(e) { scale=1; offsetX=0; offsetY=0; }
-            applyTransform();
+        
+        function onWindowResize() {
+            const container = document.getElementById('drawingArea');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
         }
-
-        function drawFlat(geom, dims, totalLen) {
-            svg.innerHTML = '';
-            const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-            g.setAttribute('id','mainGroup'); svg.appendChild(g);
-            if (!geom || totalLen <= 0) {
-                const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-                t.setAttribute('x','400'); t.setAttribute('y','150'); t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#8899aa');
-                t.textContent = 'Введите параметры'; g.appendChild(t);
-                return;
-            }
-            const L_mm = getBendLength();
-            const drawScale = Math.min(600/totalLen, 1.5);
-            const drawLen = totalLen * drawScale;
-            const stripH = L_mm * drawScale;
-            const startX = (800 - drawLen)/2;
-            const baseY = 150 + stripH/2;
-
-            const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-            rect.setAttribute('x', startX); rect.setAttribute('y', baseY-stripH); rect.setAttribute('width', drawLen); rect.setAttribute('height', stripH);
-            rect.setAttribute('class','flat-body'); g.appendChild(rect);
-
-            function addDim(x1, x2, y, label, above=true) {
-                const ly = above ? y - stripH - 16 : y + 16;
-                const dg = document.createElementNS('http://www.w3.org/2000/svg','g');
-                const l = document.createElementNS('http://www.w3.org/2000/svg','line');
-                l.setAttribute('x1',x1); l.setAttribute('x2',x2); l.setAttribute('y1',ly); l.setAttribute('y2',ly);
-                l.setAttribute('class','dim-line'); dg.appendChild(l);
-                const poly1 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-                poly1.setAttribute('points', `${x1},${ly} ${x1+5},${ly-3} ${x1+5},${ly+3}`);
-                poly1.setAttribute('fill','#64748b'); dg.appendChild(poly1);
-                const poly2 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-                poly2.setAttribute('points', `${x2},${ly} ${x2-5},${ly-3} ${x2-5},${ly+3}`);
-                poly2.setAttribute('fill','#64748b'); dg.appendChild(poly2);
-                const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-                txt.setAttribute('x',(x1+x2)/2); txt.setAttribute('y', above ? ly-7 : ly+15);
-                txt.setAttribute('text-anchor','middle'); txt.setAttribute('class','dim-text');
-                txt.textContent = label; dg.appendChild(txt); g.appendChild(dg);
-            }
-
-            function addVerticalDim(x, y1, y2, label, left=true) {
-                const lx = left ? x - 20 : x + 20;
-                const dg = document.createElementNS('http://www.w3.org/2000/svg','g');
-                const l = document.createElementNS('http://www.w3.org/2000/svg','line');
-                l.setAttribute('x1',lx); l.setAttribute('x2',lx); l.setAttribute('y1',y1); l.setAttribute('y2',y2);
-                l.setAttribute('class','dim-line'); dg.appendChild(l);
-                const poly1 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-                poly1.setAttribute('points', `${lx},${y1} ${lx-3},${y1+5} ${lx+3},${y1+5}`);
-                poly1.setAttribute('fill','#64748b'); dg.appendChild(poly1);
-                const poly2 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-                poly2.setAttribute('points', `${lx},${y2} ${lx-3},${y2-5} ${lx+3},${y2-5}`);
-                poly2.setAttribute('fill','#64748b'); dg.appendChild(poly2);
-                const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-                txt.setAttribute('x', left ? lx-8 : lx+8); txt.setAttribute('y',(y1+y2)/2);
-                txt.setAttribute('text-anchor', left?'end':'start'); txt.setAttribute('dominant-baseline','central');
-                txt.setAttribute('class','dim-text'); txt.textContent = label; dg.appendChild(txt); g.appendChild(dg);
-            }
-
-            function drawBend(xStart, w, baVal, bendIdx) {
-                const zone = document.createElementNS('http://www.w3.org/2000/svg','rect');
-                zone.setAttribute('x',xStart); zone.setAttribute('y',baseY-stripH); zone.setAttribute('width',w); zone.setAttribute('height',stripH);
-                zone.setAttribute('class','bend-zone');
-                zone.setAttribute('data-bend-idx', bendIdx);
-                zone.addEventListener('click', () => {
-                    selectedBendIdx = bendIdx;
-                    updateBendEditor();
-                    redraw();
-                });
-                g.appendChild(zone);
-                [xStart, xStart+w].forEach(x => {
-                    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-                    line.setAttribute('x1',x); line.setAttribute('x2',x); line.setAttribute('y1',baseY-stripH); line.setAttribute('y2',baseY);
-                    line.setAttribute('class','bend-line'); g.appendChild(line);
-                });
-                const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-                txt.setAttribute('x',xStart+w/2); txt.setAttribute('y',baseY-stripH/2);
-                txt.setAttribute('class','bend-zone-text'); txt.textContent = `BA ${baVal.toFixed(2)}`; g.appendChild(txt);
-            }
-
-            const segs = [];
-            const bd = dims.bends;
-            const segLen = dims.segments.length;
-            const bendGeom = geom.bends;
-
-            for (let i = 0; i < segLen; i++) {
-                const segLenVal = dims.segments[i].length;
-                let leftOSSB = 0, rightOSSB = 0;
-                if (i < bendGeom.length) leftOSSB = bendGeom[i].OSSB;
-                if (i > 0 && i - 1 < bendGeom.length) rightOSSB = bendGeom[i - 1].OSSB;
-                const netLen = segLenVal - leftOSSB - rightOSSB;
-                segs.push({ t: 's', w: Math.max(0, netLen) * drawScale, lbl: `${segLenVal.toFixed(1)}` });
-                if (i < bends.length) {
-                    segs.push({ t: 'b', w: bendGeom[i].BA * drawScale, ba: bendGeom[i].BA, idx: i });
-                }
-            }
-
-            let xPos = startX;
-            segs.forEach(s => {
-                if (s.t === 'b') drawBend(xPos, s.w, s.ba, s.idx);
-                else if (s.w > 0.1) addDim(xPos, xPos + s.w, baseY, s.lbl, true);
-                xPos += s.w;
-            });
-            addDim(startX, startX + drawLen, baseY, `${totalLen.toFixed(2)} мм`, false);
-            addVerticalDim(startX, baseY - stripH, baseY, `L гиба = ${L_mm} мм`, true);
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
         }
-
-        function drawBent(geom, dims) {
-            svg.innerHTML = '';
-            const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-            g.setAttribute('id','mainGroup'); svg.appendChild(g);
-            if (!geom || dims.segments.length === 0) {
-                const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-                t.setAttribute('x','400'); t.setAttribute('y','150'); t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#8899aa');
-                t.textContent = 'Нет данных'; g.appendChild(t);
-                return;
+        
+        function clearPart() {
+            while (partGroup.children.length > 0) {
+                const child = partGroup.children[0];
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+                partGroup.remove(child);
             }
+        }
+        
+        function drawBent3D(geom, dims) {
+            clearPart();
+            if (!geom || dims.segments.length === 0) return;
+            
             const { S, R } = geom;
             const outerR = R + S;
             const bendGeom = geom.bends;
             const segs = dims.segments;
             const bd = dims.bends;
-
-            class PathBuilder {
-                constructor(x,y,a){ this.x=x; this.y=y; this.angle=a; this.d=`M ${x} ${y}`; this.segs=[]; }
-                line(len,label,off){
-                    if(len<0)len=0;
-                    const mx=this.x+len/2*Math.cos(this.angle), my=this.y+len/2*Math.sin(this.angle);
-                    this.segs.push({mx,my,angle:this.angle,label,offsetDist:off});
-                    this.x+=len*Math.cos(this.angle); this.y+=len*Math.sin(this.angle);
-                    this.d+=` L ${this.x} ${this.y}`;
-                }
-                arc(r,bendDeg,dir){
-                    if(bendDeg<=0) return;
-                    const rad=bendDeg*Math.PI/180, sweep=dir>0?1:0;
-                    const norm=this.angle+dir*Math.PI/2;
-                    const cx=this.x+r*Math.cos(norm), cy=this.y+r*Math.sin(norm);
-                    this.angle+=dir*rad;
-                    const newNorm=this.angle+dir*Math.PI/2;
-                    this.x=cx-r*Math.cos(newNorm); this.y=cy-r*Math.sin(newNorm);
-                    const large=bendDeg>180?1:0;
-                    this.d+=` A ${r} ${r} 0 ${large} ${sweep} ${this.x} ${this.y}`;
-                }
-            }
-
-            let startAngle = 0;
-
-            let builder = new PathBuilder(0, 0, startAngle);
-
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x4488cc,
+                metalness: 0.4,
+                roughness: 0.6,
+                side: THREE.DoubleSide
+            });
+            
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x88bbff, linewidth: 1 });
+            
+            const path3D = [];
+            let currentAngle = 0;
+            let cx = 0, cy = 0;
+            
+            const halfW = getBendLength() / 2;
+            
             for (let i = 0; i < segs.length; i++) {
                 let leftOSSB = 0, rightOSSB = 0;
                 if (i < bendGeom.length) leftOSSB = bendGeom[i].OSSB;
                 if (i > 0 && i - 1 < bendGeom.length) rightOSSB = bendGeom[i - 1].OSSB;
                 const netLen = Math.max(0, segs[i].length - leftOSSB - rightOSSB);
-                const label = segs[i].length.toFixed(1);
-                const off = (bd[i] && bd[i].direction > 0) || (!bd[i] && i > 0 && bd[i-1] && bd[i-1].direction > 0) ? 20 : -20;
-                builder.line(netLen, label, off);
-
+                
+                const startX = cx;
+                const startY = cy;
+                const endX = cx + netLen * Math.cos(currentAngle);
+                const endY = cy + netLen * Math.sin(currentAngle);
+                
+                const segPoints = 8;
+                for (let j = 0; j <= segPoints; j++) {
+                    const t = j / segPoints;
+                    path3D.push(new THREE.Vector3(
+                        startX + (endX - startX) * t,
+                        0,
+                        startY + (endY - startY) * t
+                    ));
+                }
+                
+                cx = endX;
+                cy = endY;
+                
                 if (i < bd.length) {
-                    builder.arc(outerR, bendGeom[i].bendAngleDeg, bd[i].direction);
+                    const bendAngle = bendGeom[i].bendAngleDeg * Math.PI / 180;
+                    const dir = bd[i].direction;
+                    const arcSegments = 16;
+                    
+                    const norm = currentAngle + dir * Math.PI / 2;
+                    const centerX = cx + outerR * Math.cos(norm);
+                    const centerY = cy + outerR * Math.sin(norm);
+                    
+                    const startArcAngle = Math.atan2(cy - centerY, cx - centerX);
+                    
+                    for (let j = 1; j <= arcSegments; j++) {
+                        const t = j / arcSegments;
+                        const arcAngle = startArcAngle + dir * bendAngle * t;
+                        const px = centerX + outerR * Math.cos(arcAngle);
+                        const py = centerY + outerR * Math.sin(arcAngle);
+                        path3D.push(new THREE.Vector3(px, 0, py));
+                    }
+                    
+                    currentAngle += dir * bendAngle;
+                    cx = centerX + outerR * Math.cos(startArcAngle + dir * bendAngle);
+                    cy = centerY + outerR * Math.sin(startArcAngle + dir * bendAngle);
                 }
             }
-
-            if (builder && builder.d) {
-                const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-                path.setAttribute('d', builder.d); path.setAttribute('class','bent-outline'); g.appendChild(path);
-                builder.segs.forEach(seg => {
-                    const nx=Math.cos(seg.angle+Math.PI/2), ny=Math.sin(seg.angle+Math.PI/2);
-                    const tx=seg.mx+nx*seg.offsetDist, ty=seg.my+ny*seg.offsetDist;
-                    let ta=(seg.angle*180/Math.PI)%360; if(ta<0)ta+=360;
-                    if(ta>90&&ta<270)ta-=180; else if(Math.abs(ta-90)<0.1||Math.abs(ta-270)<0.1)ta=-90;
-                    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
-                    txt.setAttribute('x',tx); txt.setAttribute('y',ty); txt.setAttribute('text-anchor','middle');
-                    txt.setAttribute('dominant-baseline','central'); txt.setAttribute('class','dim-text');
-                    txt.textContent=seg.label; txt.setAttribute('transform',`rotate(${ta.toFixed(1)} ${tx} ${ty})`);
-                    g.appendChild(txt);
-                });
+            
+            if (path3D.length < 2) return;
+            
+            const shape = new THREE.Shape();
+            const halfThick = S / 2;
+            
+            const firstPt = path3D[0];
+            const lastPt = path3D[path3D.length - 1];
+            
+            const extrudeSettings = {
+                steps: 1,
+                depth: S,
+                bevelEnabled: false
+            };
+            
+            const lineGeom = new THREE.BufferGeometry().setFromPoints(path3D);
+            const line = new THREE.Line(lineGeom, new THREE.LineBasicMaterial({ color: 0xff8844, linewidth: 2 }));
+            partGroup.add(line);
+            
+            for (let i = 0; i < path3D.length - 1; i++) {
+                const p1 = path3D[i];
+                const p2 = path3D[i + 1];
+                
+                const dx = p2.x - p1.x;
+                const dz = p2.z - p1.z;
+                const len = Math.sqrt(dx * dx + dz * dz);
+                if (len < 0.001) continue;
+                
+                const nx = -dz / len;
+                const nz = dx / len;
+                
+                const boxGeom = new THREE.BoxGeometry(len, S, S);
+                const box = new THREE.Mesh(boxGeom, material);
+                
+                box.position.set(
+                    (p1.x + p2.x) / 2,
+                    0,
+                    (p1.z + p2.z) / 2
+                );
+                
+                const angle = Math.atan2(dz, dx);
+                box.rotation.y = -angle;
+                
+                box.castShadow = true;
+                box.receiveShadow = true;
+                partGroup.add(box);
             }
+            
+            const center = new THREE.Vector3();
+            const bbox = new THREE.Box3().setFromObject(partGroup);
+            bbox.getCenter(center);
+            controls.target.copy(center);
+            camera.position.set(center.x + 80, center.y + 60, center.z + 100);
+        }
+        
+        function drawFlat3D(geom, dims, totalLen) {
+            clearPart();
+            if (!geom || totalLen <= 0) return;
+            
+            const L_mm = getBendLength();
+            const bendGeom = geom.bends;
+            const segs = dims.segments;
+            const bd = dims.bends;
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x1e3b5c,
+                metalness: 0.3,
+                roughness: 0.7,
+                side: THREE.DoubleSide
+            });
+            
+            const totalW = totalLen;
+            const totalH = L_mm;
+            
+            const shape = new THREE.Shape();
+            shape.moveTo(-totalW / 2, -totalH / 2);
+            shape.lineTo(totalW / 2, -totalH / 2);
+            shape.lineTo(totalW / 2, totalH / 2);
+            shape.lineTo(-totalW / 2, totalH / 2);
+            shape.lineTo(-totalW / 2, -totalH / 2);
+            
+            const extrudeSettings = { depth: 0.5, bevelEnabled: false };
+            const geomShape = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const mesh = new THREE.Mesh(geomShape, material);
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.position.y = 0.5;
+            partGroup.add(mesh);
+            
+            let xPos = -totalW / 2;
+            const segWidths = [];
+            
+            for (let i = 0; i < segs.length; i++) {
+                let leftOSSB = 0, rightOSSB = 0;
+                if (i < bendGeom.length) leftOSSB = bendGeom[i].OSSB;
+                if (i > 0 && i - 1 < bendGeom.length) rightOSSB = bendGeom[i - 1].OSSB;
+                const netLen = Math.max(0, segs[i].length - leftOSSB - rightOSSB);
+                segWidths.push(netLen);
+                if (i < bends.length) {
+                    segWidths.push(bendGeom[i].BA);
+                }
+            }
+            
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xf97316, linewidth: 2 });
+            let xCursor = -totalW / 2;
+            
+            for (let i = 0; i < segWidths.length; i++) {
+                const w = segWidths[i];
+                const isBend = i % 2 === 1;
+                
+                if (isBend) {
+                    const points = [
+                        new THREE.Vector3(xCursor, 0.6, -totalH / 2),
+                        new THREE.Vector3(xCursor, 0.6, totalH / 2),
+                        new THREE.Vector3(xCursor + w, 0.6, totalH / 2),
+                        new THREE.Vector3(xCursor + w, 0.6, -totalH / 2),
+                        new THREE.Vector3(xCursor, 0.6, -totalH / 2)
+                    ];
+                    const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+                    const rect = new THREE.Line(lineGeom, new THREE.LineBasicMaterial({ color: 0xf97316, linewidth: 2 }));
+                    partGroup.add(rect);
+                    
+                    const fillShape = new THREE.Shape();
+                    fillShape.moveTo(0, -totalH / 2);
+                    fillShape.lineTo(w, -totalH / 2);
+                    fillShape.lineTo(w, totalH / 2);
+                    fillShape.lineTo(0, totalH / 2);
+                    fillShape.lineTo(0, -totalH / 2);
+                    const fillGeom = new THREE.ShapeGeometry(fillShape);
+                    const fillMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+                    const fillMesh = new THREE.Mesh(fillGeom, fillMat);
+                    fillMesh.rotation.x = -Math.PI / 2;
+                    fillMesh.position.set(xCursor + w / 2, 0.55, 0);
+                    partGroup.add(fillMesh);
+                }
+                
+                xCursor += w;
+            }
+            
+            controls.target.set(0, 0, 0);
+            camera.position.set(0, 150, 0);
+            camera.lookAt(0, 0, 0);
         }
 
         function updateExplanation(geom, dims, totalLen) {
@@ -1272,11 +1362,7 @@
 
             updateExplanation(geom, dims, totalLen);
             updateInnerIndicators(geom, dims);
-            const needFit = resetViewOnSwitch || !firstDrawDone;
-            if (currentView === 'flat') drawFlat(geom, dims, totalLen);
-            else drawBent(geom, dims);
-            if (needFit) { fitToView(); firstDrawDone = true; resetViewOnSwitch = false; }
-            else applyTransform();
+            controls.update();
         }
 
         function resetManualDie() { manualDie = null; }
@@ -1375,7 +1461,6 @@
             const ns = Math.min(3, Math.max(0.4, scale * factor));
             offsetX = mx - (mx - offsetX) * (ns / scale);
             offsetY = my - (my - offsetY) * (ns / scale);
-            scale = ns; applyTransform();
         });
         drawingArea.addEventListener('mousedown', e => {
             if (e.button === 0) { isPanning = true; panStart = {x:e.clientX, y:e.clientY}; panOffsetStart = {x:offsetX, y:offsetY}; e.preventDefault(); }
@@ -1384,29 +1469,16 @@
             if (!isPanning) return;
             offsetX = panOffsetStart.x + (e.clientX - panStart.x);
             offsetY = panOffsetStart.y + (e.clientY - panStart.y);
-            applyTransform();
         });
         window.addEventListener('mouseup', () => { isPanning = false; });
-        document.getElementById('zoomInBtn').addEventListener('click', () => { scale = Math.min(3, scale * 1.15); applyTransform(); });
-        document.getElementById('zoomOutBtn').addEventListener('click', () => { scale = Math.max(0.4, scale / 1.15); applyTransform(); });
-        document.getElementById('resetViewBtn').addEventListener('click', () => { fitToView(); });
-
-        // Keyboard shortcut: D or Space to flip bend direction
-        document.addEventListener('keydown', e => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-            if ((e.key === 'd' || e.key === 'D' || e.key === ' ') && selectedBendIdx >= 0 && selectedBendIdx < bends.length) {
-                e.preventDefault();
-                bends[selectedBendIdx].direction *= -1;
-                updateBendEditor();
-                redraw();
-            }
-        });
+        document.getElementById('zoomInBtn').addEventListener('click', () => { camera.position.multiplyScalar(0.85); controls.update(); });
+        document.getElementById('resetViewBtn').addEventListener('click', () => { camera.position.set(100, 80, 150); controls.target.set(0, 0, 0); controls.update(); });
 
         // ---------- INIT ----------
         updateBendEditor();
         refreshProfilesList();
+        initThreeJS();
         redraw();
-        setTimeout(() => { fitToView(); }, 60);
     })();
 </script>
 </body>
