@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Калькулятор развёртки листового металла · Durma AD-R 40175</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0c141f;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.2rem;
+            color: #eef3f9;
+        }
+        .app {
+            display: flex;
+            width: 100%;
+            max-width: 1450px;
+            gap: 1.2rem;
+            background: rgba(18, 28, 40, 0.85);
+            backdrop-filter: blur(24px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.7);
+            flex-wrap: wrap;
+        }
+        .sidebar { 
+            flex: 0 0 430px; 
+            background: rgba(10, 18, 28, 0.5); 
+            border-radius: 1.5rem; 
+            padding: 1.5rem; 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+        .main-area { flex: 1 1 550px; min-width: 450px; display: flex; flex-direction: column; background: #0a121e; border-radius: 1.5rem; padding: 1.2rem; border: 1px solid rgba(255, 255, 255, 0.06); }
+        .header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.2rem; }
+        .header svg { width: 28px; height: 28px; fill: none; stroke: #60a5fa; stroke-width: 2; }
+        h1 { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.3px; color: #fff; }
+        .subtitle { font-size: 0.75rem; color: #8899b5; margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+        label { font-size: 0.9rem; font-weight: 500; letter-spacing: 0.3px; color: #d0ddf0; }
+        .preset-group { display: flex; gap: 0.4rem; }
+        .preset-btn {
+            background: rgba(100, 150, 200, 0.2);
+            border: 1px solid rgba(100, 150, 200, 0.4);
+            color: #c0d4f0;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .preset-btn:hover { background: #2563eb; color: white; border-color: white; }
+        select, input { width: 100%; padding: 0.65rem 0.9rem; border-radius: 0.8rem; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.12); color: white; font-size: 0.9rem; outline: none; transition: 0.2s; }
+        select:focus, input:focus { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+        .input-row { display: flex; gap: 0.5rem; align-items: center; }
+        .input-row input[type=number] { flex: 1; }
+        .input-row input[type=range] { flex: 2; padding: 0; background: transparent; border: none; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.2); outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
+        .input-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #60a5fa; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .warning {
+            font-size: 0.85rem; font-weight: 600; line-height: 1.5; margin-top: 0.3rem; padding: 0.5rem 0.7rem;
+            background: rgba(251, 191, 36, 0.15); border-radius: 0.6rem; transition: all 0.2s; color: #ffdd99;
+        }
+        .warning-active {
+            animation: blinkWarning 3s ease-in-out infinite;
+            background: rgba(220, 60, 50, 0.85); border: 1px solid #ffaa00; color: #fff3c9; font-weight: 700;
+        }
+        @keyframes blinkWarning {
+            0% { background: rgba(220, 60, 50, 0.7); border-color: #ffaa00; }
+            50% { background: rgba(255, 100, 50, 0.95); border-color: #ffcc44; }
+            100% { background: rgba(220, 60, 50, 0.7); border-color: #ffaa00; }
+        }
+        .param-panel { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; background: #111c2b; border-radius: 1rem; padding: 0.7rem 1rem; margin-bottom: 0.8rem; border: 1px solid rgba(255,255,255,0.06); }
+        .param-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; background: rgba(255,255,255,0.03); padding: 0.45rem 0.8rem; border-radius: 0.7rem; border: 1px solid transparent; }
+        .param-icon { font-size: 1.1rem; opacity: 0.8; }
+        .param-value { font-size: 1.1rem; font-weight: 600; color: #fff; }
+        .param-label { font-size: 0.7rem; text-transform: uppercase; color: #8b9bb5; }
+        
+        #resLength {
+            color: #4ade80 !important;
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        #btnExportDxf {
+            cursor: pointer;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            background: rgba(74, 222, 128, 0.04);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #btnExportDxf:hover {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: #4ade80;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+            transform: translateY(-1px);
+        }
+        #btnExportDxf:active {
+            transform: translateY(1px);
+        }
+
+        #resDieSelect {
+            background: transparent; border: none; color: #60a5fa; font-size: 1.1rem; font-weight: 700;
+            outline: none; cursor: pointer; padding: 0; font-family: inherit; width: 50px; text-align: center;
+            border-bottom: 1px dashed rgba(96, 165, 250, 0.6); -webkit-appearance: none; appearance: none;
+        }
+        #resDieSelect option { background: #111c2b; color: white; font-weight: normal; }
+
+        .view-toggle { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .view-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a0b3cc; padding: 0.5rem 1rem; border-radius: 0.7rem; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s; }
+        .view-btn.active { background: #2563eb; border-color: #2563eb; color: white; }
+        .canvas-wrapper { flex: 1; position: relative; background: #060d16; border-radius: 1rem; overflow: hidden; cursor: grab; min-height: 380px; }
+        .canvas-wrapper:active { cursor: grabbing; }
+        .canvas-wrapper svg { width: 100%; height: 100%; display: block; }
+        .zoom-controls { position: absolute; bottom: 12px; right: 16px; display: flex; gap: 8px; z-index: 5; }
+        .zoom-btn {
+            background: rgba(20, 30, 45, 0.8); border: 1px solid rgba(255,255,255,0.15); color: #e0e8f0;
+            padding: 0.5rem 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600;
+            cursor: pointer; backdrop-filter: blur(8px); transition: 0.1s; min-width: 44px; text-align: center;
+        }
+        .zoom-btn:hover { background: rgba(40, 55, 75, 0.9); }
+        .footer-note { margin-top: 0.6rem; text-align: right; font-size: 0.7rem; color: #5c6e82; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; }
+        .explanation {
+            margin-top: 0.6rem; padding: 0.5rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 0.6rem;
+            font-size: 13px; color: #b4c6e0; line-height: 1.5; border: 1px solid rgba(255,255,255,0.05); white-space: pre-line;
+        }
+        .dim-text { font-family: 'Inter', sans-serif; font-size: 13px; fill: #d5e0f0; font-weight: 500; }
+        .bend-line { stroke: #f97316; stroke-width: 2; stroke-dasharray: 5 3; }
+        .dim-line { stroke: #64748b; stroke-width: 1.2; }
+        .flat-body { fill: #1e3b5c; stroke: #5c7b9c; stroke-width: 1.5; }
+        .bend-zone { fill: #f97316; opacity: 0.25; }
+        .bend-zone-text { fill: #ffffff; font-size: 10px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+        .bent-outline { fill: none; stroke: #e0e8f0; stroke-width: 2.5; stroke-linejoin: round; }
+        .fix-link { text-decoration: underline; cursor: pointer; color: #60a5fa; font-weight: 700; }
+        
+        .inner-indicator { 
+            font-size: 0.72rem; 
+            color: #34d399; 
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            padding: 0.4rem 0.55rem;
+            border-radius: 0.6rem;
+            white-space: nowrap;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            display: inline-block;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+            width: 90px;
+            text-align: center;
+        }
+        .bend-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 0.6rem;
+            padding: 0.5rem 0.6rem;
+            margin-bottom: 0.3rem;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .bend-item-header {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.3rem;
+        }
+        .bend-item-header label {
+            font-size: 0.75rem;
+            color: #8b9bb5;
+            min-width: 50px;
+        }
+        .bend-item select {
+            width: auto;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.4rem;
+        }
+        .del-bend-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 0.3rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .del-bend-btn:hover { opacity: 1; }
+        .dir-btn {
+            width: 32px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: #60a5fa;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dir-btn:hover { background: rgba(96,165,250,0.15); border-color: #60a5fa; }
+        .segment-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.6rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.75rem;
+            color: #6b7d8e;
+        }
+        .segment-row input {
+            width: 70px;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        .leg-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.6rem;
+            margin-bottom: 0.3rem;
+            background: rgba(96, 165, 250, 0.06);
+            border-radius: 0.4rem;
+            border: 1px solid rgba(96, 165, 250, 0.15);
+        }
+        .leg-row label {
+            font-size: 0.75rem;
+            color: #60a5fa;
+            min-width: 50px;
+        }
+        .leg-row input {
+            width: 70px;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        @media (max-width: 850px) {
+            .app { flex-direction: column; }
+            .sidebar { flex: auto; }
+            .main-area { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="sidebar">
+        <div class="header">
+            <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z" /><line x1="3" y1="3" x2="10" y2="10" stroke-width="1.5" /><line x1="14" y1="3" x2="21" y2="10" /><line x1="3" y1="14" x2="10" y2="21" /><line x1="14" y1="14" x2="21" y2="21" /></svg>
+            <h1>Калькулятор гибки</h1>
+        </div>
+        <div class="subtitle">Durma AD-R 40175 · Матрицы 10–50 мм</div>
+        <div class="input-group"><label>🔩 Материал</label>
+            <div class="preset-group" id="materialBtns">
+                <span class="preset-btn active" data-mat="steel">Сталь</span>
+                <span class="preset-btn" data-mat="stainless">Нерж.</span>
+                <span class="preset-btn" data-mat="aluminum">Алюм.</span>
+                <span class="preset-btn" data-mat="copper">Медь</span>
+            </div>
+            <input type="hidden" id="material" value="steel">
+        </div>
+        
+        <div class="input-group">
+            <div class="label-row">
+                <label>📏 Толщина S, мм</label>
+                <div class="preset-group" id="thicknessPresets">
+                    <span class="preset-btn" data-thickness="1">1</span>
+                    <span class="preset-btn" data-thickness="1.5">1.5</span>
+                    <span class="preset-btn" data-thickness="2">2</span>
+                    <span class="preset-btn" data-thickness="3">3</span>
+                    <span class="preset-btn" data-thickness="4">4</span>
+                    <span class="preset-btn" data-thickness="5">5</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <input type="number" id="thickness" value="2.0" step="0.1" min="0.5" max="7">
+                <input type="range" id="thicknessSlider" min="0.5" max="7" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="label-row">
+                <label>📏 Длина гиба L, мм</label>
+            </div>
+            <div class="input-row">
+                <input type="number" id="bendLength" value="100" step="1" min="10" max="4150">
+                <input type="range" id="bendLengthSlider" min="50" max="4150" step="50" value="100">
+            </div>
+        </div>
+
+        <div id="angleGroup" style="display:none;"></div>
+        
+        <div class="input-group">
+            <div class="label-row">
+                <label>🔧 Гибы</label>
+            </div>
+            <div id="bendList"></div>
+        </div>
+        
+        <div id="warningBox" class="warning"></div>
+        <div style="font-size:0.7rem; color:#6b7d8e; margin-top:0.8rem;">Ввод размеров — по внешней стороне.<br>Развёртка = Σ внешних − Σ BD</div>
+    </div>
+    <div class="main-area">
+        <div class="param-panel" id="results">
+            <div class="param-item">
+                <span class="param-label">Матрица</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🛠️</span>
+                    <select id="resDieSelect" title="Нажмите, чтобы изменить матрицу вручную">
+                        <option value="10">V10</option>
+                        <option value="16">V16</option>
+                        <option value="22">V22</option>
+                        <option value="35">V35</option>
+                        <option value="50">V50</option>
+                    </select>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Усилие пресса</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🏋️‍♂️</span>
+                    <span class="param-value" id="resForce">0.0 т</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Радиус Ri</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">⭕</span>
+                    <span class="param-value" id="resRadius">2.42</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">K-фактор</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">📊</span>
+                    <span class="param-value" id="resK">0.34</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Σ BD, мм</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">➖</span>
+                    <span class="param-value" id="resBD">2.51</span>
+                </div>
+            </div>
+            <div class="param-item" id="btnExportDxf" title="Скачать чертеж развёртки в формате DXF">
+                <span class="param-label">Развёртка DXF</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">📋</span>
+                    <span class="param-value" id="resLength">217.4</span>
+                </div>
+            </div>
+        </div>
+        <div class="view-toggle">
+            <button class="view-btn active" id="bentViewBtn">🔧 Согнутая деталь</button>
+            <button class="view-btn" id="flatViewBtn">📐 Развёртка</button>
+        </div>
+        <div class="canvas-wrapper" id="drawingArea">
+            <svg id="flatSvg" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoomInBtn" title="Приблизить">＋</button>
+                <button class="zoom-btn" id="zoomOutBtn" title="Отдалить">－</button>
+                <button class="zoom-btn" id="resetViewBtn" title="Сбросить вид">⌂</button>
+            </div>
+        </div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const materialData = {
+            steel: { name:'Сталь', Rm:400, E:210000, minRiS:0.8 },
+            stainless: { name:'Нерж.', Rm:600, E:193000, minRiS:1.2 },
+            aluminum: { name:'Алюм.', Rm:250, E:70000, minRiS:1.5 },
+            copper: { name:'Медь', Rm:250, E:117000, minRiS:1.0 }
+        };
+        const availableDies = [10, 16, 22, 35, 50];
+        let manualDie = null;
+
+        // ---------- МОДЕЛЬ: N гибов → N+1 полок ----------
+        let bendState = {
+            legs: [{ length: 50 }, { length: 30 }],
+            bends: [{ angle: 90, direction: -1 }]
+        };
+
+        // ---------- ФИЗИКА ----------
+        function getAirRadius(V, S, matKey) {
+            return 0.156 * V * Math.pow(S / (V / 8), -0.2) * Math.pow(materialData[matKey].Rm / 400, 0.15);
+        }
+        function getKFactor(Ri, S) {
+            const ratio = Ri / S;
+            const t = [[0.5,0.28],[0.8,0.32],[1.0,0.35],[1.5,0.40],[2.0,0.43],[3.0,0.46],[4.0,0.48],[5.0,0.49]];
+            if (ratio <= t[0][0]) return t[0][1];
+            if (ratio >= t[t.length-1][0]) return t[t.length-1][1];
+            for (let i=0;i<t.length-1;i++) if (ratio>=t[i][0]&&ratio<=t[i+1][0]) {
+                const p=(ratio-t[i][0])/(t[i+1][0]-t[i][0]);
+                return t[i][1]+p*(t[i+1][1]-t[i][1]);
+            }
+            return 0.4;
+        }
+        function getSpringback(desired, Ri, S, matKey) {
+            const m=materialData[matKey], rad=desired*Math.PI/180;
+            return (3*m.Rm*Ri)/(m.E*S)*rad*180/Math.PI;
+        }
+        function getAngleForceFactor(a) { return a<90?1+(90-a)*0.012:a>90?Math.max(0.5,1-(a-90)*0.008):1; }
+        function getMinFlange(V,S,ext) { return (V/2)*Math.tan((180-ext)/2*Math.PI/180)+S; }
+        function autoSelectDie(matKey,S) {
+            let best=availableDies[availableDies.length-1],bestS=Infinity;
+            const mat=materialData[matKey];
+            for(let V of availableDies){const Ri=getAirRadius(V,S,matKey);if(Ri/S<mat.minRiS)continue;const sc=Math.abs(V-(matKey==='stainless'?10*S:8*S));if(sc<bestS){bestS=sc;best=V;}}
+            return best;
+        }
+
+        function getMaterialKey(){return document.getElementById('material').value;}
+        function getThickness(){return Math.min(7,Math.max(0.5,parseFloat(document.getElementById('thickness').value)||0));}
+        function getBendLength(){return Math.min(4150,Math.max(10,parseFloat(document.getElementById('bendLength').value)||200));}
+
+        // ---------- UI: СПИСОК ГИБОВ ----------
+        function renderBendList() {
+            const c = document.getElementById('bendList');
+            const N = bendState.bends.length;
+            let html = '';
+            for (let i = 0; i <= N; i++) {
+                const leg = bendState.legs[i];
+                const hasBend = i < N;
+                const b = hasBend ? bendState.bends[i] : null;
+                const dirLabel = b ? (b.direction === -1 ? '←' : '→') : '';
+                html += `<div class="bend-item">
+                    <div class="bend-item-header">
+                        <label style="min-width:50px;">Полка ${i+1}</label>
+                        <input type="number" data-leg="${i}" value="${leg.length}" step="1" min="6" max="200" style="width:50px;padding:0.2rem 0.3rem;font-size:0.8rem;text-align:center;" oninput="onLegChange(${i},this.value)">
+                        <span style="color:#6b7d8e;font-size:0.7rem;">мм</span>`;
+                if (hasBend) {
+                    html += `
+                        <span style="color:#6b7d8e;font-size:0.7rem;margin-left:8px;">∠</span>
+                        <input type="number" data-bend-angle="${i}" value="${b.angle}" step="1" min="60" max="170" style="width:40px;padding:0.2rem 0.3rem;font-size:0.8rem;text-align:center;" oninput="onBendAngleChange(${i},this.value)">
+                        <span style="color:#6b7d8e;font-size:0.7rem;">°</span>
+                        <button class="dir-btn" onclick="toggleBendDir(${i})" title="Направление">${dirLabel}</button>
+                        <button class="del-bend-btn" onclick="removeBend(${i})" title="Удалить гиб">×</button>`;
+                }
+                html += `</div></div>`;
+            }
+            html += `<div style="margin-top:6px;"><span class="preset-btn" id="addBendBtn" style="background:rgba(74,222,128,0.2);border-color:rgba(74,222,128,0.4);color:#4ade80;">+ Добавить гиб</span></div>`;
+            c.innerHTML = html;
+            document.getElementById('addBendBtn').addEventListener('click', addBend);
+        }
+
+        window.onLegChange = function(i, val) {
+            bendState.legs[i].length = Math.max(6, parseFloat(val) || 10);
+            redraw();
+        };
+        window.onBendAngleChange = function(i, val) {
+            bendState.bends[i].angle = Math.min(170, Math.max(60, parseFloat(val) || 90));
+            redraw();
+        };
+        window.toggleBendDir = function(i) {
+            bendState.bends[i].direction *= -1;
+            renderBendList();
+            redraw();
+        };
+        window.addBend = function() {
+            bendState.bends.push({ angle: 90, direction: bendState.bends.length % 2 === 0 ? -1 : 1 });
+            bendState.legs.splice(bendState.legs.length - 1, 0, { length: 50 });
+            renderBendList();
+            redraw();
+        };
+        window.removeBend = function(i) {
+            if (bendState.bends.length <= 1) return;
+            bendState.bends.splice(i, 1);
+            bendState.legs.splice(i + 1, 1);
+            renderBendList();
+            redraw();
+        };
+
+        // ---------- РАСЧЁТ ----------
+        function calculateGeometry() {
+            const matKey = getMaterialKey(), S = getThickness();
+            if (S <= 0) return null;
+            let V = manualDie !== null ? manualDie : autoSelectDie(matKey, S);
+            document.getElementById('resDieSelect').value = V;
+            const R = getAirRadius(V, S, matKey), K = getKFactor(R, S);
+            const bends = bendState.bends.map(b => {
+                const deg = 180 - Math.min(170, Math.max(10, b.angle));
+                const sb = getSpringback(deg, R, S, matKey);
+                const ld = Math.max(0.1, deg - sb), rad = ld * Math.PI / 180;
+                return { bendAngleDeg:deg, loadBendDeg:ld, direction:b.direction,
+                    BA:Math.PI*(R+K*S)*(ld/180), OSSB:(R+S)*Math.tan(rad/2),
+                    BD:2*(R+S)*Math.tan(rad/2)-Math.PI*(R+K*S)*(ld/180) };
+            });
+            return { matKey, S, V, R, K, bends };
+        }
+        function computeFlatLength(geom) {
+            if (!geom) return 0;
+            const totalBD = geom.bends.reduce((s,b)=>s+b.BD,0);
+            const totalLegs = bendState.legs.reduce((s,l)=>s+l.length,0);
+            return Math.max(0, totalLegs - totalBD);
+        }
+
+        // ---------- ВАЛИДАЦИЯ ----------
+        function validate(geom, forceTon, forcePerMeter) {
+            if (!geom) return [];
+            const msgs = [], mat = materialData[geom.matKey];
+            if (geom.R/geom.S < mat.minRiS) msgs.push(`⚠️ Ri/S = ${(geom.R/geom.S).toFixed(2)} < ${mat.minRiS}`);
+            if (forceTon > 175) msgs.push(`❌ Усилие ${forceTon.toFixed(1)} т > 175 т`);
+            if (forcePerMeter > 600) msgs.push(`❌ ${forcePerMeter.toFixed(0)} кН/м > 600 кН/м`);
+            if (forcePerMeter > 1000) msgs.push(`❌ ${forcePerMeter.toFixed(0)} кН/м > 1000 кН/м`);
+            bendState.bends.forEach((b,i) => {
+                const minF = getMinFlange(geom.V, geom.S, b.angle);
+                if (bendState.legs[i].length < minF) msgs.push(`⚠️ Полка ${i+1} < мин. ${minF.toFixed(1)} мм`);
+            });
+            return msgs;
+        }
+
+        // ---------- ВИЗУАЛИЗАЦИЯ ----------
+        const svg = document.getElementById('flatSvg');
+        let scale=1, offsetX=0, offsetY=0, isDragging=false, lastMX=0, lastMY=0, currentView='bent';
+
+        function applyTransform() {
+            const g = document.getElementById('mainGroup');
+            if (g) g.setAttribute('transform', `translate(${offsetX},${offsetY}) scale(${scale})`);
+            document.querySelectorAll('.dim-text').forEach(t => t.style.fontSize = (13/scale)+'px');
+            document.querySelectorAll('.bend-zone-text').forEach(t => t.style.fontSize = (10/scale)+'px');
+        }
+        function fitToView() {
+            const g = document.getElementById('mainGroup');
+            if (!g) return;
+            try { const bb=g.getBBox(); if(!bb||!bb.width||!bb.height){scale=1;offsetX=0;offsetY=0;} else { const p=0.75,W=800,H=300; scale=Math.min((W*p)/bb.width,(H*p)/bb.height,2.5); offsetX=(W-bb.width*scale)/2-bb.x*scale; offsetY=(H-bb.height*scale)/2-bb.y*scale; }} catch(e){scale=1;offsetX=0;offsetY=0;}
+            applyTransform();
+        }
+
+        class PathBuilder {
+            constructor(x,y,a){this.x=x;this.y=y;this.angle=a;this.d=`M ${x} ${y}`;this.segs=[];}
+            line(len,label,off){if(len<=0)return;const mx=this.x+len/2*Math.cos(this.angle),my=this.y+len/2*Math.sin(this.angle);this.segs.push({mx,my,angle:this.angle,label,offsetDist:off});this.x+=len*Math.cos(this.angle);this.y+=len*Math.sin(this.angle);this.d+=` L ${this.x} ${this.y}`;}
+            arc(r,bendDeg,dir){if(bendDeg<=0)return;const rad=bendDeg*Math.PI/180,sweep=dir>0?1:0;const norm=this.angle+dir*Math.PI/2;const cx=this.x+r*Math.cos(norm),cy=this.y+r*Math.sin(norm);this.angle+=dir*rad;const nn=this.angle+dir*Math.PI/2;this.x=cx-r*Math.cos(nn);this.y=cy-r*Math.sin(nn);this.d+=` A ${r} ${r} 0 ${bendDeg>180?1:0} ${sweep} ${this.x} ${this.y}`;}
+        }
+
+        function drawBent(geom) {
+            svg.innerHTML = '';
+            const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+            g.setAttribute('id','mainGroup'); svg.appendChild(g);
+            if (!geom) { const t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x','400');t.setAttribute('y','150');t.setAttribute('text-anchor','middle');t.setAttribute('fill','#8899aa');t.textContent='Нет данных';g.appendChild(t);return; }
+            const outerR = geom.R + geom.S;
+            const builder = new PathBuilder(0, 0, 0);
+            const N = bendState.bends.length;
+            for (let i = 0; i <= N; i++) {
+                const legLen = bendState.legs[i].length;
+                const ossb = (i < N) ? geom.bends[i].OSSB : 0;
+                const prevOssb = (i > 0) ? geom.bends[i-1].OSSB : 0;
+                const drawLen = Math.max(0, legLen - (i === 0 ? ossb : (i === N ? prevOssb : ossb + prevOssb)));
+                const label = `L${i+1}=${legLen}`;
+                builder.line(drawLen, label, 15);
+                if (i < N) {
+                    builder.arc(outerR, geom.bends[i].bendAngleDeg, geom.bends[i].direction);
+                }
+            }
+            if (builder.d) {
+                const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+                path.setAttribute('d', builder.d); path.setAttribute('class','bent-outline'); g.appendChild(path);
+                builder.segs.forEach(seg => {
+                    const nx=Math.cos(seg.angle+Math.PI/2),ny=Math.sin(seg.angle+Math.PI/2);
+                    const tx=seg.mx+nx*seg.offsetDist,ty=seg.my+ny*seg.offsetDist;
+                    let ta=(seg.angle*180/Math.PI)%360; if(ta<0)ta+=360;
+                    if(ta>90&&ta<270)ta-=180;
+                    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+                    txt.setAttribute('x',tx);txt.setAttribute('y',ty);txt.setAttribute('text-anchor','middle');
+                    txt.setAttribute('dominant-baseline','central');txt.setAttribute('class','dim-text');
+                    txt.textContent=seg.label;txt.setAttribute('transform',`rotate(${ta.toFixed(1)} ${tx} ${ty})`);
+                    g.appendChild(txt);
+                });
+            }
+        }
+
+        function drawFlat(geom, totalLen) {
+            svg.innerHTML = '';
+            const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+            g.setAttribute('id','mainGroup'); svg.appendChild(g);
+            if (!geom || totalLen <= 0) { const t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x','400');t.setAttribute('y','150');t.setAttribute('text-anchor','middle');t.setAttribute('fill','#8899aa');t.textContent='Нет данных';g.appendChild(t);return; }
+            const L_mm = getBendLength();
+            const drawScale = Math.min(600/totalLen, 1.5);
+            const drawLen = totalLen * drawScale;
+            const stripH = L_mm * drawScale;
+            const startX = (800 - drawLen)/2;
+            const baseY = 150 + stripH/2;
+            const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            rect.setAttribute('x',startX);rect.setAttribute('y',baseY-stripH);rect.setAttribute('width',drawLen);rect.setAttribute('height',stripH);
+            rect.setAttribute('class','flat-body');g.appendChild(rect);
+
+            function addDim(x1,x2,y,label,above) {
+                const ly=above?y-stripH-16:y+16;
+                const dg=document.createElementNS('http://www.w3.org/2000/svg','g');
+                const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+                l.setAttribute('x1',x1);l.setAttribute('x2',x2);l.setAttribute('y1',ly);l.setAttribute('y2',ly);
+                l.setAttribute('class','dim-line');dg.appendChild(l);
+                const p1=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+                p1.setAttribute('points',`${x1},${ly} ${x1+5},${ly-3} ${x1+5},${ly+3}`);p1.setAttribute('fill','#64748b');dg.appendChild(p1);
+                const p2=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+                p2.setAttribute('points',`${x2},${ly} ${x2-5},${ly-3} ${x2-5},${ly+3}`);p2.setAttribute('fill','#64748b');dg.appendChild(p2);
+                const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+                txt.setAttribute('x',(x1+x2)/2);txt.setAttribute('y',above?ly-7:ly+15);
+                txt.setAttribute('text-anchor','middle');txt.setAttribute('class','dim-text');
+                txt.textContent=label;dg.appendChild(txt);g.appendChild(dg);
+            }
+
+            let xPos = startX;
+            const N = bendState.bends.length;
+            for (let i = 0; i <= N; i++) {
+                const w = bendState.legs[i].length * drawScale;
+                addDim(xPos, xPos+w, baseY, `L${i+1}=${bendState.legs[i].length}`, true);
+                xPos += w;
+                if (i < N) {
+                    const bw = geom.bends[i].BA * drawScale;
+                    const zone = document.createElementNS('http://www.w3.org/2000/svg','rect');
+                    zone.setAttribute('x',xPos);zone.setAttribute('y',baseY-stripH);zone.setAttribute('width',bw);zone.setAttribute('height',stripH);
+                    zone.setAttribute('class','bend-zone');g.appendChild(zone);
+                    [xPos, xPos+bw].forEach(xx => {
+                        const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+                        ln.setAttribute('x1',xx);ln.setAttribute('x2',xx);ln.setAttribute('y1',baseY-stripH);ln.setAttribute('y2',baseY);
+                        ln.setAttribute('class','bend-line');g.appendChild(ln);
+                    });
+                    const zt=document.createElementNS('http://www.w3.org/2000/svg','text');
+                    zt.setAttribute('x',xPos+bw/2);zt.setAttribute('y',baseY-stripH/2);
+                    zt.setAttribute('class','bend-zone-text');zt.textContent=`BA ${geom.bends[i].BA.toFixed(2)}`;g.appendChild(zt);
+                    xPos += bw;
+                }
+            }
+            addDim(startX, startX+drawLen, baseY, `${totalLen.toFixed(2)} мм`, false);
+        }
+
+        // ---------- REDRAW ----------
+        function redraw() {
+            const geom = calculateGeometry();
+            const totalLen = computeFlatLength(geom);
+            if (geom) {
+                document.getElementById('resRadius').textContent = geom.R.toFixed(2);
+                document.getElementById('resK').textContent = geom.K.toFixed(2);
+                document.getElementById('resBD').textContent = geom.bends.reduce((s,b)=>s+b.BD,0).toFixed(2);
+                document.getElementById('resLength').textContent = totalLen.toFixed(1);
+                const Rm = materialData[geom.matKey].Rm, L_mm = getBendLength();
+                const avgF = geom.bends.reduce((s,b)=>s+getAngleForceFactor(b.bendAngleDeg),0)/geom.bends.length;
+                const forceTon = (1.3*Rm*L_mm*geom.S*geom.S/geom.V*avgF)/1000/9.80665;
+                const forcePM = (1.3*Rm*L_mm*geom.S*geom.S/geom.V*avgF)/1000/(L_mm/1000);
+                document.getElementById('resForce').textContent = forceTon.toFixed(1)+' т';
+                const msgs = validate(geom, forceTon, forcePM);
+                const wb = document.getElementById('warningBox');
+                wb.innerHTML = msgs.join('<br>'); wb.style.display = msgs.length ? 'block' : 'none';
+            }
+            if (currentView === 'bent') drawBent(geom); else drawFlat(geom, totalLen);
+            setTimeout(fitToView, 50);
+        }
+
+        // ---------- ЗУМ/ПАН ----------
+        const da = document.getElementById('drawingArea');
+        da.addEventListener('wheel', e => { e.preventDefault(); scale *= e.deltaY>0?0.9:1.1; scale=Math.min(Math.max(scale,0.05),10); applyTransform(); });
+        da.addEventListener('mousedown', e => { isDragging=true; lastMX=e.clientX; lastMY=e.clientY; });
+        window.addEventListener('mousemove', e => { if(!isDragging)return; offsetX+=e.clientX-lastMX; offsetY+=e.clientY-lastMY; lastMX=e.clientX; lastMY=e.clientY; applyTransform(); });
+        window.addEventListener('mouseup', () => isDragging=false);
+        document.getElementById('zoomInBtn').addEventListener('click', () => { scale*=1.3;scale=Math.min(scale,10);applyTransform(); });
+        document.getElementById('zoomOutBtn').addEventListener('click', () => { scale*=0.7;scale=Math.max(scale,0.05);applyTransform(); });
+        document.getElementById('resetViewBtn').addEventListener('click', fitToView);
+
+        // ---------- ВИД ----------
+        document.getElementById('bentViewBtn').addEventListener('click', () => { currentView='bent'; document.getElementById('bentViewBtn').classList.add('active'); document.getElementById('flatViewBtn').classList.remove('active'); redraw(); });
+        document.getElementById('flatViewBtn').addEventListener('click', () => { currentView='flat'; document.getElementById('flatViewBtn').classList.add('active'); document.getElementById('bentViewBtn').classList.remove('active'); redraw(); });
+
+        // ---------- DXF ----------
+        function createDxfLine(x1,y1,x2,y2,layer) {
+            return `0\nLINE\n8\n${layer}\n10\n${x1.toFixed(3)}\n20\n${y1.toFixed(3)}\n30\n0\n11\n${x2.toFixed(3)}\n21\n${y2.toFixed(3)}\n31\n0\n`;
+        }
+        document.getElementById('btnExportDxf').addEventListener('click', () => {
+            const geom = calculateGeometry(), totalLen = computeFlatLength(geom);
+            if (!geom || totalLen<=0) return;
+            const L_mm = getBendLength();
+            let dxf = "0\nSECTION\n2\nENTITIES\n";
+            dxf += createDxfLine(0,0,totalLen,0,"OUTLINE");
+            dxf += createDxfLine(totalLen,0,totalLen,L_mm,"OUTLINE");
+            dxf += createDxfLine(totalLen,L_mm,0,L_mm,"OUTLINE");
+            dxf += createDxfLine(0,L_mm,0,0,"OUTLINE");
+            let x = 0;
+            bendState.legs.forEach((leg,i) => {
+                x += leg.length;
+                if (i < geom.bends.length) {
+                    const ba = geom.bends[i].BA;
+                    dxf += createDxfLine(x,0,x,L_mm,"BEND_BOUNDARIES");
+                    dxf += createDxfLine(x+ba/2,0,x+ba/2,L_mm,"BEND_CENTER");
+                    dxf += createDxfLine(x+ba,0,x+ba,L_mm,"BEND_BOUNDARIES");
+                    x += ba;
+                }
+            });
+            dxf += "0\nENDSEC\n0\nEOF\n";
+            const blob = new Blob([dxf],{type:"application/dxf"});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `develop_${totalLen.toFixed(1)}x${L_mm}.dxf`; a.click();
+        });
+
+        // ---------- СОБЫТИЯ ----------
+        document.querySelectorAll('#materialBtns .preset-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('#materialBtns .preset-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                document.getElementById('material').value = b.dataset.mat;
+                manualDie = null;
+                redraw();
+            });
+        });
+        document.querySelectorAll('#thicknessPresets .preset-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                document.getElementById('thickness').value = b.dataset.thickness;
+                document.getElementById('thicknessSlider').value = b.dataset.thickness;
+                manualDie = null;
+                redraw();
+            });
+        });
+        document.getElementById('thicknessSlider').addEventListener('input', function() { document.getElementById('thickness').value=this.value; redraw(); });
+        document.getElementById('thickness').addEventListener('input', function() { document.getElementById('thicknessSlider').value=this.value; redraw(); });
+        document.getElementById('bendLengthSlider').addEventListener('input', function() { document.getElementById('bendLength').value=this.value; redraw(); });
+        document.getElementById('bendLength').addEventListener('input', function() { document.getElementById('bendLengthSlider').value=this.value; redraw(); });
+        document.getElementById('resDieSelect').addEventListener('change', function() { manualDie=parseInt(this.value); redraw(); });
+
+        renderBendList();
+        redraw();
+    })();
+</script>
+</body>
+</html>

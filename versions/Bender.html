@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Калькулятор развёртки листового металла · Durma AD-R 40175</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0c141f;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.2rem;
+            color: #eef3f9;
+        }
+        .app {
+            display: flex;
+            width: 100%;
+            max-width: 1450px;
+            gap: 1.2rem;
+            background: rgba(18, 28, 40, 0.85);
+            backdrop-filter: blur(24px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.7);
+            flex-wrap: wrap;
+        }
+        .sidebar { 
+            flex: 0 0 430px; 
+            background: rgba(10, 18, 28, 0.5); 
+            border-radius: 1.5rem; 
+            padding: 1.5rem; 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+        .main-area { flex: 1 1 550px; min-width: 450px; display: flex; flex-direction: column; background: #0a121e; border-radius: 1.5rem; padding: 1.2rem; border: 1px solid rgba(255, 255, 255, 0.06); }
+        .header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.2rem; }
+        .header svg { width: 28px; height: 28px; fill: none; stroke: #60a5fa; stroke-width: 2; }
+        h1 { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.3px; color: #fff; }
+        .mode-toggle { display: flex; gap: 0.3rem; margin-left: 0.8rem; }
+        .toggle-btn {
+            padding: 0.3rem 0.7rem; border-radius: 1rem; font-size: 0.7rem;
+            font-weight: 600; text-decoration: none; transition: 0.15s;
+            background: rgba(100,150,200,0.15); border: 1px solid rgba(100,150,200,0.3);
+            color: #8899b5; cursor: pointer;
+        }
+        .toggle-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
+        .toggle-btn:hover:not(.active) { background: rgba(100,150,200,0.3); }
+        .subtitle { font-size: 0.75rem; color: #8899b5; margin-bottom: 1.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+        label { font-size: 0.9rem; font-weight: 500; letter-spacing: 0.3px; color: #d0ddf0; }
+        .preset-group { display: flex; gap: 0.4rem; }
+        .preset-btn {
+            background: rgba(100, 150, 200, 0.2);
+            border: 1px solid rgba(100, 150, 200, 0.4);
+            color: #c0d4f0;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .preset-btn:hover { background: #2563eb; color: white; border-color: white; }
+        select, input { width: 100%; padding: 0.65rem 0.9rem; border-radius: 0.8rem; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.12); color: white; font-size: 0.9rem; outline: none; transition: 0.2s; }
+        select:focus, input:focus { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+        .input-row { display: flex; gap: 0.5rem; align-items: center; }
+        .input-row input[type=number] { flex: 1; }
+        .input-row input[type=range] { flex: 2; padding: 0; background: transparent; border: none; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.2); outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
+        .input-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #60a5fa; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .warning {
+            font-size: 0.85rem; font-weight: 600; line-height: 1.5; margin-top: 0.3rem; padding: 0.5rem 0.7rem;
+            background: rgba(251, 191, 36, 0.15); border-radius: 0.6rem; transition: all 0.2s; color: #ffdd99;
+        }
+        .warning-active {
+            animation: blinkWarning 3s ease-in-out infinite;
+            background: rgba(220, 60, 50, 0.85); border: 1px solid #ffaa00; color: #fff3c9; font-weight: 700;
+        }
+        @keyframes blinkWarning {
+            0% { background: rgba(220, 60, 50, 0.7); border-color: #ffaa00; }
+            50% { background: rgba(255, 100, 50, 0.95); border-color: #ffcc44; }
+            100% { background: rgba(220, 60, 50, 0.7); border-color: #ffaa00; }
+        }
+        .param-panel { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; background: #111c2b; border-radius: 1rem; padding: 0.7rem 1rem; margin-bottom: 0.8rem; border: 1px solid rgba(255,255,255,0.06); }
+        .param-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; background: rgba(255,255,255,0.03); padding: 0.45rem 0.8rem; border-radius: 0.7rem; border: 1px solid transparent; }
+        .param-icon { font-size: 1.1rem; opacity: 0.8; }
+        .param-value { font-size: 1.1rem; font-weight: 600; color: #fff; }
+        .param-label { font-size: 0.7rem; text-transform: uppercase; color: #8b9bb5; }
+        
+        #resLength {
+            color: #4ade80 !important;
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        #btnExportDxf {
+            cursor: pointer;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            background: rgba(74, 222, 128, 0.04);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #btnExportDxf:hover {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: #4ade80;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+            transform: translateY(-1px);
+        }
+        #btnExportDxf:active {
+            transform: translateY(1px);
+        }
+
+        #resDieSelect {
+            background: transparent; border: none; color: #60a5fa; font-size: 1.1rem; font-weight: 700;
+            outline: none; cursor: pointer; padding: 0; font-family: inherit; width: 50px; text-align: center;
+            border-bottom: 1px dashed rgba(96, 165, 250, 0.6); -webkit-appearance: none; appearance: none;
+        }
+        #resDieSelect option { background: #111c2b; color: white; font-weight: normal; }
+
+        .view-toggle { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .view-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a0b3cc; padding: 0.5rem 1rem; border-radius: 0.7rem; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s; }
+        .view-btn.active { background: #2563eb; border-color: #2563eb; color: white; }
+        .canvas-wrapper { flex: 1; position: relative; background: #060d16; border-radius: 1rem; overflow: hidden; cursor: grab; min-height: 380px; }
+        .canvas-wrapper:active { cursor: grabbing; }
+        .canvas-wrapper svg { width: 100%; height: 100%; display: block; }
+        .zoom-controls { position: absolute; bottom: 12px; right: 16px; display: flex; gap: 8px; z-index: 5; }
+        .zoom-btn {
+            background: rgba(20, 30, 45, 0.8); border: 1px solid rgba(255,255,255,0.15); color: #e0e8f0;
+            padding: 0.5rem 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600;
+            cursor: pointer; backdrop-filter: blur(8px); transition: 0.1s; min-width: 44px; text-align: center;
+        }
+        .zoom-btn:hover { background: rgba(40, 55, 75, 0.9); }
+        .footer-note { margin-top: 0.6rem; text-align: right; font-size: 0.7rem; color: #5c6e82; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; }
+        .explanation {
+            margin-top: 0.6rem; padding: 0.5rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 0.6rem;
+            font-size: 13px; color: #b4c6e0; line-height: 1.5; border: 1px solid rgba(255,255,255,0.05); white-space: pre-line;
+        }
+        .dim-text { font-family: 'Inter', sans-serif; font-size: 13px; fill: #d5e0f0; font-weight: 500; }
+        .bend-line { stroke: #f97316; stroke-width: 2; stroke-dasharray: 5 3; }
+        .dim-line { stroke: #64748b; stroke-width: 1.2; }
+        .flat-body { fill: #1e3b5c; stroke: #5c7b9c; stroke-width: 1.5; }
+        .bend-zone { fill: #f97316; opacity: 0.25; }
+        .bend-zone-text { fill: #ffffff; font-size: 10px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+        .bent-outline { fill: none; stroke: #e0e8f0; stroke-width: 2.5; stroke-linejoin: round; }
+        .fix-link { text-decoration: underline; cursor: pointer; color: #60a5fa; font-weight: 700; }
+        
+        .inner-indicator { 
+            font-size: 0.72rem; 
+            color: #34d399; 
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            padding: 0.4rem 0.55rem;
+            border-radius: 0.6rem;
+            white-space: nowrap;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            display: inline-block;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+            width: 90px;
+            text-align: center;
+        }
+        @media (max-width: 850px) {
+            .app { flex-direction: column; }
+            .sidebar { flex: auto; }
+            .main-area { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="sidebar">
+        <div class="header">
+            <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z" /><line x1="3" y1="3" x2="10" y2="10" stroke-width="1.5" /><line x1="14" y1="3" x2="21" y2="10" /><line x1="3" y1="14" x2="10" y2="21" /><line x1="14" y1="14" x2="21" y2="21" /></svg>
+            <h1>Калькулятор гибки</h1>
+            <div class="mode-toggle">
+                <span class="toggle-btn active">Bender</span>
+                <a href="multibender_3d.html" class="toggle-btn">3D</a>
+            </div>
+        </div>
+        <div class="subtitle">Durma AD-R 40175 · Матрицы 10–50 мм</div>
+        <div class="input-group"><label>🔩 Материал</label><select id="material"><option value="steel">Сталь низкоуглеродистая</option><option value="stainless">Нержавеющая сталь</option><option value="aluminum">Алюминий</option><option value="copper">Медь / Латунь</option></select></div>
+        
+        <div class="input-group">
+            <div class="label-row">
+                <label>📏 Толщина S, мм</label>
+                <div class="preset-group" id="thicknessPresets">
+                    <span class="preset-btn" data-thickness="1">1</span>
+                    <span class="preset-btn" data-thickness="1.5">1.5</span>
+                    <span class="preset-btn" data-thickness="2">2</span>
+                    <span class="preset-btn" data-thickness="3">3</span>
+                    <span class="preset-btn" data-thickness="4">4</span>
+                    <span class="preset-btn" data-thickness="5">5</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <input type="number" id="thickness" value="2.0" step="0.1" min="0.5" max="7">
+                <input type="range" id="thicknessSlider" min="0.5" max="7" step="0.1" value="2.0">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="label-row">
+                <label>📏 Длина гиба L, мм</label>
+                <div style="display: flex; gap: 0.3rem; margin-left: auto;">
+                    <span class="preset-btn" data-round-down="bendLength" title="Округлить вниз до 100">🔽 -100</span>
+                    <span class="preset-btn" data-round-up="bendLength" title="Округлить вверх до 100">🔼 +100</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <input type="number" id="bendLength" value="100" step="1" min="10" max="4150">
+                <input type="range" id="bendLengthSlider" min="50" max="4150" step="50" value="100">
+            </div>
+        </div>
+
+        <div id="angleGroup" style="display:none;"></div>
+        <div class="input-group"><label>🧩 Тип профиля</label><select id="profileType"><option value="angle">Уголок (1 гиб)</option><option value="U">П-образный (2 гиба)</option><option value="Z">Z-зигзаг (2 гиба)</option></select></div>
+        <div id="legInputs"></div>
+        <div id="warningBox" class="warning"></div>
+        <div style="font-size:0.7rem; color:#6b7d8e; margin-top:0.8rem;">Ввод размеров — по внешней стороне.<br>Развёртка = Σ внешних − Σ BD</div>
+    </div>
+    <div class="main-area">
+        <div class="param-panel" id="results">
+            <div class="param-item">
+                <span class="param-label">Матрица</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🛠️</span>
+                    <select id="resDieSelect" title="Нажмите, чтобы изменить матрицу вручную">
+                        <option value="10">V10</option>
+                        <option value="16">V16</option>
+                        <option value="22">V22</option>
+                        <option value="35">V35</option>
+                        <option value="50">V50</option>
+                    </select>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Усилие пресса</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">🏋️‍♂️</span>
+                    <span class="param-value" id="resForce">0.0 т</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Радиус Ri</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">⭕</span>
+                    <span class="param-value" id="resRadius">2.42</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">K-фактор</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">📊</span>
+                    <span class="param-value" id="resK">0.34</span>
+                </div>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Σ BD, мм</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">➖</span>
+                    <span class="param-value" id="resBD">2.51</span>
+                </div>
+            </div>
+            <div class="param-item" id="btnExportDxf" title="Скачать чертеж развёртки в формате DXF">
+                <span class="param-label">Развёртка DXF</span>
+                <div style="display:flex;align-items:center;gap:0.3rem;">
+                    <span class="param-icon">📋</span>
+                    <span class="param-value" id="resLength">217.4</span>
+                </div>
+            </div>
+        </div>
+        <div class="view-toggle">
+            <button class="view-btn active" id="bentViewBtn">🔧 Согнутая деталь</button>
+            <button class="view-btn" id="flatViewBtn">📐 Развёртка</button>
+        </div>
+        <div class="canvas-wrapper" id="drawingArea">
+            <svg id="flatSvg" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoomInBtn" title="Приблизить">＋</button>
+                <button class="zoom-btn" id="zoomOutBtn" title="Отдалить">－</button>
+                <button class="zoom-btn" id="resetViewBtn" title="Сбросить вид">⌂</button>
+            </div>
+        </div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- РАСШИРЕННЫЕ ДАННЫЕ МАТЕРИАЛОВ ----------
+        const materialData = {
+            steel: { name:'Сталь', Rm:400, E:210000, minRiS:0.8 },
+            stainless: { name:'Нерж.', Rm:600, E:193000, minRiS:1.2 },
+            aluminum: { name:'Алюм.', Rm:250, E:70000, minRiS:1.5 },
+            copper: { name:'Медь', Rm:250, E:117000, minRiS:1.0 }
+        };
+
+        const availableDies = [10, 16, 22, 35, 50];
+        let manualDie = null;
+
+        // ---------- ФИЗИЧЕСКИЕ МОДЕЛИ ----------
+        function getAirRadius(V, S, matKey) {
+            const Rm = materialData[matKey].Rm;
+            const baseRi = 0.156 * V * Math.pow(S / (V / 8), -0.2);
+            return baseRi * Math.pow(Rm / 400, 0.15);
+        }
+
+        function getKFactor(Ri, S) {
+            const ratio = Ri / S;
+            const table = [
+                { r: 0.5, k: 0.28 },
+                { r: 0.8, k: 0.32 },
+                { r: 1.0, k: 0.35 },
+                { r: 1.5, k: 0.40 },
+                { r: 2.0, k: 0.43 },
+                { r: 3.0, k: 0.46 },
+                { r: 4.0, k: 0.48 },
+                { r: 5.0, k: 0.49 }
+            ];
+            if (ratio <= table[0].r) return table[0].k;
+            if (ratio >= table[table.length-1].r) return table[table.length-1].k;
+            for (let i=0; i<table.length-1; i++) {
+                if (ratio >= table[i].r && ratio <= table[i+1].r) {
+                    const t = (ratio - table[i].r) / (table[i+1].r - table[i].r);
+                    return table[i].k + t * (table[i+1].k - table[i].k);
+                }
+            }
+            return 0.4;
+        }
+
+        function getSpringbackAngle(desiredBendDeg, Ri, S, matKey) {
+            const mat = materialData[matKey];
+            const rad = desiredBendDeg * Math.PI / 180;
+            const deltaRad = (3 * mat.Rm * Ri) / (mat.E * S) * rad;
+            return deltaRad * 180 / Math.PI;
+        }
+
+        function getAngleForceFactor(externalAngleDeg) {
+            const a = externalAngleDeg;
+            if (a < 90) return 1 + (90 - a) * 0.012;
+            if (a > 90) return Math.max(0.5, 1 - (a - 90) * 0.008);
+            return 1.0;
+        }
+
+        function getMinFlange(V, S, externalAngleDeg) {
+            const halfAngleRad = (180 - externalAngleDeg) / 2 * Math.PI / 180;
+            return (V / 2) * Math.tan(halfAngleRad) + S;
+        }
+
+        // ---------- АВТОПОДБОР МАТРИЦЫ ----------
+        function autoSelectDie(matKey, S) {
+            let bestV = availableDies[availableDies.length-1];
+            let bestScore = Infinity;
+            const mat = materialData[matKey];
+            for (let V of availableDies) {
+                const Ri = getAirRadius(V, S, matKey);
+                if (Ri / S < mat.minRiS) continue;
+                const idealV = matKey === 'stainless' ? 10 * S : 8 * S;
+                const score = Math.abs(V - idealV);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestV = V;
+                }
+            }
+            if (bestScore === Infinity) bestV = availableDies[availableDies.length-1];
+            return bestV;
+        }
+
+        // ---------- ПОЛУЧЕНИЕ ВХОДНЫХ ДАННЫХ ----------
+        function getMaterialKey() { return document.getElementById('material').value; }
+        function getThickness() { return Math.min(7, Math.max(0.5, parseFloat(document.getElementById('thickness').value) || 0)); }
+        function getBendLength() { return Math.min(4150, Math.max(10, parseFloat(document.getElementById('bendLength').value) || 200)); }
+
+        function getBendAngles() {
+            const profile = document.getElementById('profileType').value;
+            if (profile === 'angle') {
+                const angleVal = parseFloat(document.getElementById('angleValue')?.value) || 90;
+                return [180 - Math.min(170, Math.max(10, angleVal))];
+            } else {
+                const a1 = parseFloat(document.getElementById('angle1')?.value) || 90;
+                const a2 = parseFloat(document.getElementById('angle2')?.value) || 90;
+                return [
+                    180 - Math.min(170, Math.max(60, a1)),
+                    180 - Math.min(170, Math.max(60, a2))
+                ];
+            }
+        }
+
+        function getExternalAngles() {
+            const profile = document.getElementById('profileType').value;
+            if (profile === 'angle') return [parseFloat(document.getElementById('angleValue')?.value) || 90];
+            else return [
+                parseFloat(document.getElementById('angle1')?.value) || 90,
+                parseFloat(document.getElementById('angle2')?.value) || 90
+            ];
+        }
+
+        function getProfileDims() {
+            const prof = document.getElementById('profileType').value;
+            const d = {};
+            if (prof === 'angle') {
+                d.leg1 = +document.getElementById('leg1')?.value || 50;
+                d.leg2 = +document.getElementById('leg2')?.value || 30;
+            } else if (prof === 'U') {
+                d.left = +document.getElementById('leftFlange')?.value || 50;
+                d.web = +document.getElementById('web')?.value || 100;
+                d.right = +document.getElementById('rightFlange')?.value || 50;
+            } else if (prof === 'Z') {
+                d.top = +document.getElementById('topFlange')?.value || 50;
+                d.mid = +document.getElementById('middle')?.value || 80;
+                d.bot = +document.getElementById('bottomFlange')?.value || 30;
+            }
+            return { profile: prof, dims: d };
+        }
+
+        // ---------- ЯДРО РАСЧЁТА ----------
+        function calculateGeometry() {
+            const matKey = getMaterialKey();
+            const S = getThickness();
+            if (S <= 0) return null;
+
+            let V;
+            if (manualDie !== null) {
+                V = manualDie;
+            } else {
+                V = autoSelectDie(matKey, S);
+            }
+            document.getElementById('resDieSelect').value = V;
+
+            const R = getAirRadius(V, S, matKey);
+            const K = getKFactor(R, S);
+            const bendAngles = getBendAngles();
+            const bends = bendAngles.map(bendDeg => {
+                const springbackDeg = getSpringbackAngle(bendDeg, R, S, matKey);
+                const loadBendDeg = Math.max(0.1, bendDeg - springbackDeg);
+                const rad = loadBendDeg * Math.PI / 180;
+                const BA = Math.PI * (R + K * S) * (loadBendDeg / 180);
+                const OSSB = (R + S) * Math.tan(rad / 2);
+                const BD = 2 * OSSB - BA;
+                return { bendAngleDeg: bendDeg, loadBendDeg, springbackDeg, OSSB, BA, BD };
+            });
+
+            return { matKey, S, V, R, K, bends };
+        }
+
+        function computeFlatLength(geom, dims) {
+            if (!geom) return 0;
+            const totalBD = geom.bends.reduce((s, b) => s + b.BD, 0);
+            const { profile, dims: d } = dims;
+            let sumExt = 0;
+            if (profile === 'angle') sumExt = d.leg1 + d.leg2;
+            else if (profile === 'U') sumExt = d.left + d.web + d.right;
+            else if (profile === 'Z') sumExt = d.top + d.mid + d.bot;
+            return Math.max(0, sumExt - totalBD);
+        }
+
+        // ---------- ВАЛИДАЦИЯ И ПРЕДУПРЕЖДЕНИЯ ----------
+        function validate(geom, dims, forceKN, forceTon, forcePerMeter) {
+            if (!geom) return [];
+            const { profile, dims: d } = dims;
+            const bends = geom.bends;
+            const V = geom.V;
+            const S = geom.S;
+            const R = geom.R;
+            const mat = materialData[geom.matKey];
+            const extAngles = getExternalAngles();
+            const messages = [];
+
+            // 1. Минимальный радиус по трещинообразованию
+            if (R / S < mat.minRiS) {
+                messages.push({
+                    text: `⚠️ Ri/S = ${(R/S).toFixed(2)} меньше допустимого ${mat.minRiS} (риск трещин)`,
+                    fixes: [{ match: `${mat.minRiS}`, field: null, target: null }]
+                });
+            }
+
+            // 2. Минимальная полка
+            if (profile === 'angle') {
+                const minF = getMinFlange(V, S, extAngles[0]);
+                if (d.leg1 < minF) messages.push({
+                    text: `⚠️ L₁ (${d.leg1} мм) меньше мин. полки (${minF.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minF.toFixed(1)} мм`, field: 'leg1', target: parseFloat(minF.toFixed(1)) }]
+                });
+                if (d.leg2 < minF) messages.push({
+                    text: `⚠️ L₂ (${d.leg2} мм) меньше мин. полки (${minF.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minF.toFixed(1)} мм`, field: 'leg2', target: parseFloat(minF.toFixed(1)) }]
+                });
+            } else if (profile === 'U') {
+                const minF1 = getMinFlange(V, S, extAngles[0]);
+                const minF2 = getMinFlange(V, S, extAngles[1]);
+                if (d.left < minF1) messages.push({
+                    text: `⚠️ L₁ (${d.left} мм) меньше мин. полки (${minF1.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minF1.toFixed(1)} мм`, field: 'leftFlange', target: parseFloat(minF1.toFixed(1)) }]
+                });
+                if (d.right < minF2) messages.push({
+                    text: `⚠️ L₂ (${d.right} мм) меньше мин. полки (${minF2.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minF2.toFixed(1)} мм`, field: 'rightFlange', target: parseFloat(minF2.toFixed(1)) }]
+                });
+                const minWeb = bends[0].OSSB + bends[1].OSSB + 1;
+                if (d.web < minWeb) messages.push({
+                    text: `⚠️ W (${d.web} мм) слишком узкое (min ${minWeb.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minWeb.toFixed(1)} мм`, field: 'web', target: parseFloat(minWeb.toFixed(1)) }]
+                });
+            } else if (profile === 'Z') {
+                const minF1 = getMinFlange(V, S, extAngles[0]);
+                const minF2 = getMinFlange(V, S, extAngles[1]);
+                if (d.top < minF1) messages.push({
+                    text: `⚠️ Z₁ (${d.top} мм) меньше мин. полки (${minF1.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minF1.toFixed(1)} мм`, field: 'topFlange', target: parseFloat(minF1.toFixed(1)) }]
+                });
+                if (d.bot < minF2) messages.push({
+                    text: `⚠️ Z₃ (${d.bot} мм) меньше мин. полки (${minF2.toFixed(1)} мм)`,
+                    fixes: [{ match: `${minF2.toFixed(1)} мм`, field: 'bottomFlange', target: parseFloat(minF2.toFixed(1)) }]
+                });
+                const minZMid = S + 60;
+                if (d.mid < minZMid) messages.push({
+                    text: `⚠️ Z₂ (${d.mid} мм) меньше минимальной ${minZMid.toFixed(1)} мм`,
+                    fixes: [{ match: `${minZMid.toFixed(1)} мм`, field: 'middle', target: parseFloat(minZMid.toFixed(1)) }]
+                });
+            }
+
+            // 3. Усилие пресса
+            if (forceTon > 175) {
+                messages.push({ text: `❌ ПРЕВЫШЕНО УСИЛИЕ ПРЕССА! Макс. 175 т, требуется: ${forceTon.toFixed(1)} т`, fixes: [] });
+            }
+            if (forcePerMeter > 600) {
+                messages.push({ text: `❌ ПРЕВЫШЕН ЛИМИТ ПУАНСОНА P.145.85.R08! Макс. 600 кН/м, текущее: ${forcePerMeter.toFixed(0)} кН/м`, fixes: [] });
+            }
+            if (forcePerMeter > 1000) {
+                messages.push({ text: `❌ ПРЕВЫШЕН ЛИМИТ МАТРИЦЫ V${V}! Макс. 1000 кН/м, текущее: ${forcePerMeter.toFixed(0)} кН/м`, fixes: [] });
+            }
+
+            return messages;
+        }
+
+        // ---------- ИНТЕРФЕЙС: СЛАЙДЕРЫ, ПРЕСЕТЫ ----------
+        function updateLegInputs() {
+            const p = document.getElementById('profileType').value;
+            let h = '';
+            const singleFlangeHtml = (id, sym, val, otherId) => `
+                <div class="input-group">
+                    <div class="label-row">
+                        <label>${sym}, мм</label>
+                        <div style="display: flex; gap: 0.3rem; margin-left: auto;">
+                            <span class="preset-btn" data-round-down="${id}">🔽 -100</span>
+                            <span class="preset-btn" data-round-up="${id}">🔼 +100</span>
+                            <span class="preset-btn" data-copy-flange="${id}|${otherId}">=</span>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="${id}" value="${val}" step="0.1" min="6.0" max="200" style="flex:0 0 85px; text-align:center;">
+                        <span class="inner-indicator" id="inner_${id}"></span>
+                        <input type="range" id="${id}Slider" min="6.0" max="200" step="1" value="${val}">
+                    </div>
+                </div>
+            `;
+            const doubleFlangeHtml = (idL, symL, idR, symR, valL, valR) => `
+                ${singleFlangeHtml(idL, symL, valL, idR)}
+                ${singleFlangeHtml(idR, symR, valR, idL)}
+            `;
+            const angleHtml = (id, val, otherId) => `
+                <div class="input-group">
+                    <div class="label-row"><label>∠, °</label>
+                        <div style="display:flex; gap:0.3rem;">
+                            <span class="preset-btn" data-set-angle="${id}|90">90°</span>
+                            ${otherId ? `<span class="preset-btn" data-copy-angle="${id}|${otherId}">=</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="${id}" value="${val}" step="0.5" min="60" max="170" style="flex:0 0 85px; text-align:center;">
+                        <input type="range" id="${id}Slider" min="60" max="170" step="0.5" value="${val}">
+                    </div>
+                </div>
+            `;
+
+            if (p === 'angle') {
+                h = singleFlangeHtml('leg1', 'L₁', 50, 'leg2') +
+                    singleFlangeHtml('leg2', 'L₂', 30, 'leg1') +
+                    angleHtml('angleValue', 90, null); // без кнопки "="
+            } else if (p === 'U') {
+                h = doubleFlangeHtml('leftFlange', 'L₁', 'rightFlange', 'L₂', 50, 50) +
+                    `<div class="input-group">
+                        <div class="label-row"><label>W, мм</label>
+                            <div style="display:flex; gap:0.3rem; margin-left:auto;">
+                                <span class="preset-btn" data-round-down="web">🔽 -100</span>
+                                <span class="preset-btn" data-round-up="web">🔼 +100</span>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <input type="number" id="web" value="100" step="0.1" min="10" max="2000" style="flex:0 0 85px; text-align:center;">
+                            <span class="inner-indicator" id="inner_web"></span>
+                            <input type="range" id="webSlider" min="10" max="200" step="1" value="100">
+                        </div>
+                    </div>` +
+                    angleHtml('angle1', 90, 'angle2') + angleHtml('angle2', 90, 'angle1');
+            } else if (p === 'Z') {
+                h = doubleFlangeHtml('topFlange', 'Z₁', 'bottomFlange', 'Z₃', 50, 30) +
+                    `<div class="input-group">
+                        <div class="label-row"><label>Z₂, мм</label>
+                            <div style="display:flex; gap:0.3rem; margin-left:auto;">
+                                <span class="preset-btn" data-round-down="middle">🔽 -100</span>
+                                <span class="preset-btn" data-round-up="middle">🔼 +100</span>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <input type="number" id="middle" value="80" step="0.1" min="10" max="2000" style="flex:0 0 85px; text-align:center;">
+                            <span class="inner-indicator" id="inner_middle"></span>
+                            <input type="range" id="middleSlider" min="10" max="200" step="1" value="80">
+                        </div>
+                    </div>` +
+                    angleHtml('angle1', 90, 'angle2') + angleHtml('angle2', 90, 'angle1');
+            }
+            document.getElementById('legInputs').innerHTML = h;
+            attachSliderEvents();
+            attachPresetEvents();
+        }
+
+        function attachPresetEvents() {
+            document.querySelectorAll('[data-copy-flange]').forEach(b => {
+                b.removeEventListener('click', copyFlangeHandler);
+                b.addEventListener('click', copyFlangeHandler);
+            });
+            document.querySelectorAll('[data-set-angle]').forEach(b => {
+                b.removeEventListener('click', setAngleHandler);
+                b.addEventListener('click', setAngleHandler);
+            });
+            document.querySelectorAll('[data-copy-angle]').forEach(b => {
+                b.removeEventListener('click', copyAngleHandler);
+                b.addEventListener('click', copyAngleHandler);
+            });
+            document.querySelectorAll('[data-round-up]').forEach(b => {
+                b.removeEventListener('click', roundUpHandler);
+                b.addEventListener('click', roundUpHandler);
+            });
+            document.querySelectorAll('[data-round-down]').forEach(b => {
+                b.removeEventListener('click', roundDownHandler);
+                b.addEventListener('click', roundDownHandler);
+            });
+        }
+
+        function copyFlangeHandler(e) {
+            const [targetId, sourceId] = e.currentTarget.dataset.copyFlange.split('|');
+            const val = parseFloat(document.getElementById(sourceId).value);
+            if (!isNaN(val)) {
+                document.getElementById(targetId).value = val.toFixed(1);
+                const slider = document.getElementById(targetId+'Slider');
+                if (slider) slider.value = val;
+                redraw();
+            }
+        }
+
+        function copyAngleHandler(e) {
+            const [targetId, sourceId] = e.currentTarget.dataset.copyAngle.split('|');
+            const val = parseFloat(document.getElementById(sourceId).value);
+            if (!isNaN(val)) {
+                document.getElementById(targetId).value = val.toFixed(1);
+                const slider = document.getElementById(targetId+'Slider');
+                if (slider) slider.value = val;
+                redraw();
+            }
+        }
+
+        function setAngleHandler(e) {
+            const [id, ang] = e.currentTarget.dataset.setAngle.split('|');
+            document.getElementById(id).value = ang;
+            const slider = document.getElementById(id+'Slider');
+            if (slider) slider.value = ang;
+            redraw();
+        }
+
+        function roundUpHandler(e) {
+            const id = e.currentTarget.dataset.roundUp;
+            const inp = document.getElementById(id);
+            if (!inp) return;
+            let v = parseFloat(inp.value) || 0;
+            v = Math.min(parseFloat(inp.max), Math.floor(v/100)*100 + 100);
+            inp.value = v.toFixed(1);
+            const slider = document.getElementById(id+'Slider');
+            if (slider) slider.value = v;
+            redraw();
+        }
+
+        function roundDownHandler(e) {
+            const id = e.currentTarget.dataset.roundDown;
+            const inp = document.getElementById(id);
+            if (!inp) return;
+            let v = parseFloat(inp.value) || 0;
+            v = Math.max(parseFloat(inp.min), v <= 100 ? 50 : Math.ceil(v/100)*100 - 100);
+            inp.value = v.toFixed(1);
+            const slider = document.getElementById(id+'Slider');
+            if (slider) slider.value = v;
+            redraw();
+        }
+
+        function attachSliderEvents() {
+            document.querySelectorAll('#legInputs input[type=range]').forEach(s => {
+                s.removeEventListener('input', rangeHandler);
+                s.addEventListener('input', rangeHandler);
+            });
+            document.querySelectorAll('#legInputs input[type=number]').forEach(n => {
+                n.removeEventListener('input', numberHandler);
+                n.addEventListener('input', numberHandler);
+            });
+        }
+
+        function rangeHandler(e) {
+            const num = document.getElementById(e.target.id.replace('Slider',''));
+            if (num) { num.value = parseFloat(e.target.value).toFixed(1); redraw(); }
+        }
+
+        function numberHandler(e) {
+            const slider = document.getElementById(e.target.id+'Slider');
+            if (slider) slider.value = e.target.value;
+            redraw();
+        }
+
+        // ---------- ВИЗУАЛИЗАЦИЯ ----------
+        let scale = 1, offsetX = 0, offsetY = 0, isPanning = false, panStart = {x:0,y:0}, panOffsetStart = {x:0,y:0};
+        let currentView = 'bent';
+        let firstDrawDone = false;
+        let resetViewOnSwitch = true;
+
+        const svg = document.getElementById('flatSvg');
+        const drawingArea = document.getElementById('drawingArea');
+
+        function applyTransform() {
+            const g = document.getElementById('mainGroup');
+            if (g) g.setAttribute('transform', `translate(${offsetX},${offsetY}) scale(${scale})`);
+            document.querySelectorAll('.dim-text').forEach(t => t.style.fontSize = (13/scale)+'px');
+            document.querySelectorAll('.bend-zone-text').forEach(t => t.style.fontSize = (10/scale)+'px');
+        }
+
+        function fitToView() {
+            const g = document.getElementById('mainGroup');
+            if (!g) return;
+            try {
+                const bbox = g.getBBox();
+                if (!bbox || bbox.width === 0 || bbox.height === 0) { scale=1; offsetX=0; offsetY=0; }
+                else {
+                    const pad = 0.75, W=800, H=300;
+                    scale = Math.min((W*pad)/bbox.width, (H*pad)/bbox.height, 2.5);
+                    offsetX = (W - bbox.width*scale)/2 - bbox.x*scale;
+                    offsetY = (H - bbox.height*scale)/2 - bbox.y*scale;
+                }
+            } catch(e) { scale=1; offsetX=0; offsetY=0; }
+            applyTransform();
+        }
+
+        function drawFlat(geom, dims, totalLen) {
+            svg.innerHTML = '';
+            const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+            g.setAttribute('id','mainGroup'); svg.appendChild(g);
+            if (!geom || totalLen <= 0) {
+                const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+                t.setAttribute('x','400'); t.setAttribute('y','150'); t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#8899aa');
+                t.textContent = 'Введите параметры'; g.appendChild(t);
+                return;
+            }
+            const L_mm = getBendLength();
+            const drawScale = Math.min(600/totalLen, 1.5);
+            const drawLen = totalLen * drawScale;
+            const stripH = L_mm * drawScale;
+            const startX = (800 - drawLen)/2;
+            const baseY = 150 + stripH/2;
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            rect.setAttribute('x', startX); rect.setAttribute('y', baseY-stripH); rect.setAttribute('width', drawLen); rect.setAttribute('height', stripH);
+            rect.setAttribute('class','flat-body'); g.appendChild(rect);
+
+            function addDim(x1, x2, y, label, above=true) {
+    const ly = above ? y - stripH - 16 : y + 16;
+    const dg = document.createElementNS('http://www.w3.org/2000/svg','g');
+    
+    // Основная линия размера
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x1); l.setAttribute('x2',x2); l.setAttribute('y1',ly); l.setAttribute('y2',ly);
+    l.setAttribute('class','dim-line'); dg.appendChild(l);
+    
+    // Левая стрелка (остриё смотрит влево, к x1)
+    const poly1 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly1.setAttribute('points', `${x1},${ly} ${x1+5},${ly-3} ${x1+5},${ly+3}`);
+    poly1.setAttribute('fill','#64748b'); dg.appendChild(poly1);
+
+    // Правая стрелка (остриё смотрит вправо, к x2)
+    const poly2 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly2.setAttribute('points', `${x2},${ly} ${x2-5},${ly-3} ${x2-5},${ly+3}`);
+    poly2.setAttribute('fill','#64748b'); dg.appendChild(poly2);
+
+    // Текст размера
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x',(x1+x2)/2); txt.setAttribute('y', above ? ly-7 : ly+15);
+    txt.setAttribute('text-anchor','middle'); txt.setAttribute('class','dim-text');
+    txt.textContent = label; dg.appendChild(txt); g.appendChild(dg);
+}
+
+            function addVerticalDim(x, y1, y2, label, left=true) {
+    const lx = left ? x - 20 : x + 20;
+    const dg = document.createElementNS('http://www.w3.org/2000/svg','g');
+    
+    // Основная вертикальная линия размера
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',lx); l.setAttribute('x2',lx); l.setAttribute('y1',y1); l.setAttribute('y2',y2);
+    l.setAttribute('class','dim-line'); dg.appendChild(l);
+    
+    // Верхняя стрелка (остриё смотрит вверх, к y1)
+    const poly1 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly1.setAttribute('points', `${lx},${y1} ${lx-3},${y1+5} ${lx+3},${y1+5}`);
+    poly1.setAttribute('fill','#64748b'); dg.appendChild(poly1);
+
+    // Нижняя стрелка (остриё смотрит вниз, к y2)
+    const poly2 = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly2.setAttribute('points', `${lx},${y2} ${lx-3},${y2-5} ${lx+3},${y2-5}`);
+    poly2.setAttribute('fill','#64748b'); dg.appendChild(poly2);
+
+    // Текст размера
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', left ? lx-8 : lx+8); txt.setAttribute('y',(y1+y2)/2);
+    txt.setAttribute('text-anchor', left?'end':'start'); txt.setAttribute('dominant-baseline','central');
+    txt.setAttribute('class','dim-text'); txt.textContent = label; dg.appendChild(txt); g.appendChild(dg);
+}
+
+            function drawBend(xStart, w, baVal) {
+                const zone = document.createElementNS('http://www.w3.org/2000/svg','rect');
+                zone.setAttribute('x',xStart); zone.setAttribute('y',baseY-stripH); zone.setAttribute('width',w); zone.setAttribute('height',stripH);
+                zone.setAttribute('class','bend-zone'); g.appendChild(zone);
+                [xStart, xStart+w].forEach(x => {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+                    line.setAttribute('x1',x); line.setAttribute('x2',x); line.setAttribute('y1',baseY-stripH); line.setAttribute('y2',baseY);
+                    line.setAttribute('class','bend-line'); g.appendChild(line);
+                });
+                const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+                txt.setAttribute('x',xStart+w/2); txt.setAttribute('y',baseY-stripH/2);
+                txt.setAttribute('class','bend-zone-text'); txt.textContent = `BA ${baVal.toFixed(2)}`; g.appendChild(txt);
+            }
+
+            const segs = [];
+            const { profile, dims:d } = dims;
+            const bends = geom.bends;
+            if (profile === 'angle') {
+                segs.push({t:'s', w:(d.leg1-bends[0].OSSB)*drawScale, lbl:`L₁=${(d.leg1-bends[0].OSSB).toFixed(2)}`});
+                segs.push({t:'b', w:bends[0].BA*drawScale, ba:bends[0].BA});
+                segs.push({t:'s', w:(d.leg2-bends[0].OSSB)*drawScale, lbl:`L₂=${(d.leg2-bends[0].OSSB).toFixed(2)}`});
+            } else if (profile === 'U') {
+                const o1=bends[0].OSSB, o2=bends[1].OSSB;
+                segs.push({t:'s', w:(d.left-o1)*drawScale, lbl:`L₁=${(d.left-o1).toFixed(2)}`});
+                segs.push({t:'b', w:bends[0].BA*drawScale, ba:bends[0].BA});
+                segs.push({t:'s', w:(d.web-o1-o2)*drawScale, lbl:`W=${(d.web-o1-o2).toFixed(2)}`});
+                segs.push({t:'b', w:bends[1].BA*drawScale, ba:bends[1].BA});
+                segs.push({t:'s', w:(d.right-o2)*drawScale, lbl:`L₂=${(d.right-o2).toFixed(2)}`});
+            } else if (profile === 'Z') {
+                const o1=bends[0].OSSB, o2=bends[1].OSSB;
+                segs.push({t:'s', w:(d.top-o1)*drawScale, lbl:`Z₁=${(d.top-o1).toFixed(2)}`});
+                segs.push({t:'b', w:bends[0].BA*drawScale, ba:bends[0].BA});
+                segs.push({t:'s', w:(d.mid-o1-o2)*drawScale, lbl:`Z₂=${(d.mid-o1-o2).toFixed(2)}`});
+                segs.push({t:'b', w:bends[1].BA*drawScale, ba:bends[1].BA});
+                segs.push({t:'s', w:(d.bot-o2)*drawScale, lbl:`Z₃=${(d.bot-o2).toFixed(2)}`});
+            }
+            let xPos = startX;
+            segs.forEach(s => {
+                if (s.t==='b') drawBend(xPos, s.w, s.ba);
+                else if (s.w>0.1) addDim(xPos, xPos+s.w, baseY, s.lbl, true);
+                xPos += s.w;
+            });
+            addDim(startX, startX+drawLen, baseY, `${totalLen.toFixed(2)} мм`, false);
+            addVerticalDim(startX, baseY-stripH, baseY, `L гиба = ${L_mm} мм`, true);
+        }
+
+        function drawBent(geom, dims) {
+            svg.innerHTML = '';
+            const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+            g.setAttribute('id','mainGroup'); svg.appendChild(g);
+            if (!geom) {
+                const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+                t.setAttribute('x','400'); t.setAttribute('y','150'); t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#8899aa');
+                t.textContent = 'Нет данных'; g.appendChild(t);
+                return;
+            }
+            const { S, R } = geom;
+            const outerR = R + S;
+            const bends = geom.bends;
+            const { profile, dims:d } = dims;
+
+            class PathBuilder {
+                constructor(x,y,a){ this.x=x; this.y=y; this.angle=a; this.d=`M ${x} ${y}`; this.segs=[]; }
+                line(len,label,off){
+                    if(len<0)len=0;
+                    const mx=this.x+len/2*Math.cos(this.angle), my=this.y+len/2*Math.sin(this.angle);
+                    this.segs.push({mx,my,angle:this.angle,label,offsetDist:off});
+                    this.x+=len*Math.cos(this.angle); this.y+=len*Math.sin(this.angle);
+                    this.d+=` L ${this.x} ${this.y}`;
+                }
+                arc(r,bendDeg,dir){
+                    if(bendDeg<=0) return;
+                    const rad=bendDeg*Math.PI/180, sweep=dir>0?1:0;
+                    const norm=this.angle+dir*Math.PI/2;
+                    const cx=this.x+r*Math.cos(norm), cy=this.y+r*Math.sin(norm);
+                    this.angle+=dir*rad;
+                    const newNorm=this.angle+dir*Math.PI/2;
+                    this.x=cx-r*Math.cos(newNorm); this.y=cy-r*Math.sin(newNorm);
+                    const large=bendDeg>180?1:0;
+                    this.d+=` A ${r} ${r} 0 ${large} ${sweep} ${this.x} ${this.y}`;
+                }
+            }
+
+            let builder;
+            if (profile === 'angle') {
+                const b = bends[0];
+                builder = new PathBuilder(0,0,Math.PI/2);
+                builder.line(Math.max(0,d.leg1-b.OSSB),`L₁=${d.leg1.toFixed(2)}`,20);
+                builder.arc(outerR,b.bendAngleDeg,-1);
+                builder.line(Math.max(0,d.leg2-b.OSSB),`L₂=${d.leg2.toFixed(2)}`,20);
+            } else if (profile === 'U') {
+                const b1=bends[0], b2=bends[1];
+                builder = new PathBuilder(0,0,Math.PI/2);
+                builder.line(Math.max(0,d.left-b1.OSSB),`L₁=${d.left.toFixed(2)}`,20);
+                builder.arc(outerR,b1.bendAngleDeg,-1);
+                builder.line(Math.max(0,d.web-b1.OSSB-b2.OSSB),`W=${d.web.toFixed(2)}`,20);
+                builder.arc(outerR,b2.bendAngleDeg,-1);
+                builder.line(Math.max(0,d.right-b2.OSSB),`L₂=${d.right.toFixed(2)}`,20);
+            } else if (profile === 'Z') {
+                const b1=bends[0], b2=bends[1];
+                builder = new PathBuilder(0,0,0);
+                builder.line(Math.max(0,d.top-b1.OSSB),`Z₁=${d.top.toFixed(2)}`,-20);
+                builder.arc(outerR,b1.bendAngleDeg,1);
+                builder.line(Math.max(0,d.mid-b1.OSSB-b2.OSSB),`Z₂=${d.mid.toFixed(2)}`,-20);
+                builder.arc(outerR,b2.bendAngleDeg,-1);
+                builder.line(Math.max(0,d.bot-b2.OSSB),`Z₃=${d.bot.toFixed(2)}`,20);
+            }
+
+            if (builder && builder.d) {
+                const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+                path.setAttribute('d',builder.d); path.setAttribute('class','bent-outline'); g.appendChild(path);
+                builder.segs.forEach(seg => {
+                    const nx=Math.cos(seg.angle+Math.PI/2), ny=Math.sin(seg.angle+Math.PI/2);
+                    const tx=seg.mx+nx*seg.offsetDist, ty=seg.my+ny*seg.offsetDist;
+                    let ta=(seg.angle*180/Math.PI)%360; if(ta<0)ta+=360;
+                    if(ta>90&&ta<270)ta-=180; else if(Math.abs(ta-90)<0.1||Math.abs(ta-270)<0.1)ta=-90;
+                    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+                    txt.setAttribute('x',tx); txt.setAttribute('y',ty); txt.setAttribute('text-anchor','middle');
+                    txt.setAttribute('dominant-baseline','central'); txt.setAttribute('class','dim-text');
+                    txt.textContent=seg.label; txt.setAttribute('transform',`rotate(${ta.toFixed(1)} ${tx} ${ty})`);
+                    g.appendChild(txt);
+                });
+            }
+        }
+
+        function updateExplanation(geom, dims, totalLen) {
+            const expl = document.getElementById('explanation');
+            if (!geom || totalLen<=0) { expl.innerHTML=''; return; }
+            const { profile, dims:d } = dims;
+            const bends = geom.bends;
+            const lines = [];
+            if (profile === 'angle') {
+                lines.push(`📐 Уголок — развёртка = (L₁−${bends[0].OSSB.toFixed(2)}) + BA (${bends[0].BA.toFixed(2)}) + (L₂−${bends[0].OSSB.toFixed(2)}) = ${totalLen.toFixed(2)} мм`);
+                lines.push(`➖ Σ внешних: ${(d.leg1+d.leg2).toFixed(2)} мм · Σ BD: ${bends[0].BD.toFixed(2)} мм`);
+            } else if (profile === 'U') {
+                lines.push(`📐 П-профиль — развёртка = (L₁−${bends[0].OSSB.toFixed(2)}) + BA₁ (${bends[0].BA.toFixed(2)}) + (W−${bends[0].OSSB.toFixed(2)}−${bends[1].OSSB.toFixed(2)}) + BA₂ (${bends[1].BA.toFixed(2)}) + (L₂−${bends[1].OSSB.toFixed(2)}) = ${totalLen.toFixed(2)} мм`);
+                lines.push(`➖ Σ внешних: ${(d.left+d.web+d.right).toFixed(2)} мм · Σ BD: ${(bends[0].BD+bends[1].BD).toFixed(2)} мм`);
+            } else {
+                lines.push(`📐 Z-профиль — развёртка = (Z₁−${bends[0].OSSB.toFixed(2)}) + BA₁ (${bends[0].BA.toFixed(2)}) + (Z₂−${bends[0].OSSB.toFixed(2)}−${bends[1].OSSB.toFixed(2)}) + BA₂ (${bends[1].BA.toFixed(2)}) + (Z₃−${bends[1].OSSB.toFixed(2)}) = ${totalLen.toFixed(2)} мм`);
+                lines.push(`➖ Σ внешних: ${(d.top+d.mid+d.bot).toFixed(2)} мм · Σ BD: ${(bends[0].BD+bends[1].BD).toFixed(2)} мм`);
+            }
+            lines.push('');
+            lines.push('📙 BD – вычет на гиб: BD = 2×OSSB − BA.');
+            lines.push('📗 OSSB – внешний отступ от вершины угла до начала радиуса.');
+            lines.push('📘 BA – длина дуги нейтрального слоя (с учётом пружинения).');
+            expl.innerHTML = lines.join('<br>');
+        }
+
+        function updateInnerIndicators(geom, dims) {
+            const ids = ['leg1','leg2','leftFlange','rightFlange','web','topFlange','middle','bottomFlange'];
+            if (!geom) { ids.forEach(id => { const el=document.getElementById('inner_'+id); if(el)el.style.display='none'; }); return; }
+            const rPlusS = geom.R + geom.S;
+            ids.forEach(id => {
+                const el = document.getElementById('inner_'+id);
+                if (!el) return;
+                const inp = document.getElementById(id);
+                if (!inp) return;
+                const ext = parseFloat(inp.value);
+                if (isNaN(ext)) { el.style.display='none'; return; }
+                const inner = (id==='web'||id==='middle') ? ext - 2*rPlusS : ext - rPlusS;
+                el.textContent = `внутр. ${inner.toFixed(1)}`;
+                el.style.display='inline-block';
+            });
+        }
+
+        // ---------- ЭКСПОРТ DXF ----------
+        function createDxfLine(x1,y1,x2,y2,layer){ return `0\nLINE\n8\n${layer}\n10\n${x1.toFixed(3)}\n20\n${y1.toFixed(3)}\n30\n0.0\n11\n${x2.toFixed(3)}\n21\n${y2.toFixed(3)}\n31\n0.0\n`; }
+
+        function exportToDXF() {
+            const geom = calculateGeometry();
+            const dims = getProfileDims();
+            const totalLen = computeFlatLength(geom, dims);
+            if (!geom || totalLen<=0) { alert("Нет данных для экспорта!"); return; }
+            const L_mm = getBendLength();
+            let dxf = "0\nSECTION\n2\nENTITIES\n";
+            dxf += createDxfLine(0,0,totalLen,0,"OUTLINE");
+            dxf += createDxfLine(totalLen,0,totalLen,L_mm,"OUTLINE");
+            dxf += createDxfLine(totalLen,L_mm,0,L_mm,"OUTLINE");
+            dxf += createDxfLine(0,L_mm,0,0,"OUTLINE");
+            const segs = [];
+            const { profile, dims:d } = dims;
+            const bends = geom.bends;
+            if (profile==='angle') {
+                segs.push({t:'s',w:d.leg1-bends[0].OSSB}); segs.push({t:'b',w:bends[0].BA}); segs.push({t:'s',w:d.leg2-bends[0].OSSB});
+            } else if (profile==='U') {
+                segs.push({t:'s',w:d.left-bends[0].OSSB}); segs.push({t:'b',w:bends[0].BA}); segs.push({t:'s',w:d.web-bends[0].OSSB-bends[1].OSSB});
+                segs.push({t:'b',w:bends[1].BA}); segs.push({t:'s',w:d.right-bends[1].OSSB});
+            } else {
+                segs.push({t:'s',w:d.top-bends[0].OSSB}); segs.push({t:'b',w:bends[0].BA}); segs.push({t:'s',w:d.mid-bends[0].OSSB-bends[1].OSSB});
+                segs.push({t:'b',w:bends[1].BA}); segs.push({t:'s',w:d.bot-bends[1].OSSB});
+            }
+            let xPos = 0;
+            segs.forEach(s => {
+                if (s.t==='b') {
+                    dxf += createDxfLine(xPos,0,xPos,L_mm,"BEND_BOUNDARIES");
+                    dxf += createDxfLine(xPos+s.w/2,0,xPos+s.w/2,L_mm,"BEND_CENTER");
+                    dxf += createDxfLine(xPos+s.w,0,xPos+s.w,L_mm,"BEND_BOUNDARIES");
+                }
+                xPos += s.w;
+            });
+            dxf += "0\nENDSEC\n0\nEOF\n";
+            const blob = new Blob([dxf],{type:"application/dxf"});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `durma_flat_${profile}_${totalLen.toFixed(1)}x${L_mm}.dxf`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        // ---------- ОСНОВНОЙ ЦИКЛ ----------
+        function redraw() {
+            const geom = calculateGeometry();
+            const dims = getProfileDims();
+            const totalLen = computeFlatLength(geom, dims);
+            const totalBD = geom ? geom.bends.reduce((s,b)=>s+b.BD,0) : 0;
+            const L_mm = getBendLength();
+            let forceTon=0, forceKN=0, forcePerMeter=0;
+            if (geom && totalLen>0) {
+                const Rm = materialData[geom.matKey].Rm;
+                const extAngles = getExternalAngles();
+                const avgFactor = extAngles.reduce((s,a)=>s+getAngleForceFactor(a),0)/extAngles.length;
+                const forceN = (1.3 * Rm * L_mm * geom.S*geom.S) / geom.V * avgFactor;
+                forceKN = forceN/1000;
+                forceTon = forceKN/9.80665;
+                forcePerMeter = forceKN/(L_mm/1000);
+            }
+            document.getElementById('resRadius').textContent = geom ? geom.R.toFixed(2) : '--';
+            document.getElementById('resK').textContent = geom ? geom.K.toFixed(3) : '--';
+            document.getElementById('resBD').textContent = totalBD>0 ? totalBD.toFixed(3) : '--';
+            document.getElementById('resLength').textContent = totalLen>0 ? totalLen.toFixed(2) : '--';
+            document.getElementById('resForce').textContent = forceTon>0 ? `${forceTon.toFixed(1)} т` : '--';
+            const messages = validate(geom, dims, forceKN, forceTon, forcePerMeter);
+            const warnDiv = document.getElementById('warningBox');
+            if (messages.length) {
+                warnDiv.innerHTML = messages.map(m => {
+                    let t = m.text;
+                    if (m.fixes) m.fixes.forEach(f => { if(f.field) t = t.replace(f.match, `<span class="fix-link" data-field="${f.field}" data-value="${f.target}">${f.match}</span>`); });
+                    return t;
+                }).join(' · ');
+                warnDiv.classList.add('warning-active');
+            } else {
+                warnDiv.innerHTML = ''; warnDiv.classList.remove('warning-active');
+            }
+            updateExplanation(geom, dims, totalLen);
+            updateInnerIndicators(geom, dims);
+            const needFit = resetViewOnSwitch || !firstDrawDone;
+            if (currentView==='flat') drawFlat(geom, dims, totalLen);
+            else drawBent(geom, dims);
+            if (needFit) { fitToView(); firstDrawDone=true; resetViewOnSwitch=false; }
+            else applyTransform();
+        }
+
+        function resetManualDie(){ manualDie=null; }
+
+        // ---------- ПРИВЯЗКА СОБЫТИЙ ----------
+        document.getElementById('warningBox').addEventListener('click', e => {
+            if (e.target.classList.contains('fix-link')) {
+                const field = e.target.dataset.field;
+                const value = parseFloat(e.target.dataset.value);
+                if (field && !isNaN(value)) {
+                    const inp = document.getElementById(field);
+                    const slider = document.getElementById(field+'Slider');
+                    if (inp) { inp.value = value.toFixed(1); if(slider) slider.value = value; redraw(); }
+                }
+            }
+        });
+
+        document.querySelectorAll('#thicknessPresets .preset-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                const v = parseFloat(b.dataset.thickness);
+                document.getElementById('thickness').value = v;
+                document.getElementById('thicknessSlider').value = v;
+                resetManualDie(); redraw();
+            });
+        });
+
+        document.getElementById('flatViewBtn').addEventListener('click', ()=>{
+            currentView='flat'; document.getElementById('flatViewBtn').classList.add('active');
+            document.getElementById('bentViewBtn').classList.remove('active');
+            resetViewOnSwitch=true; redraw();
+        });
+        document.getElementById('bentViewBtn').addEventListener('click', ()=>{
+            currentView='bent'; document.getElementById('bentViewBtn').classList.add('active');
+            document.getElementById('flatViewBtn').classList.remove('active');
+            resetViewOnSwitch=true; redraw();
+        });
+
+        document.getElementById('thickness').addEventListener('input', ()=>{
+            let v = parseFloat(document.getElementById('thickness').value);
+            if(v>7)v=7; if(v<0.5)v=0.5;
+            document.getElementById('thickness').value=v;
+            document.getElementById('thicknessSlider').value=v;
+            resetManualDie(); redraw();
+        });
+        document.getElementById('thicknessSlider').addEventListener('input', ()=>{
+            const v = parseFloat(document.getElementById('thicknessSlider').value);
+            document.getElementById('thickness').value = v.toFixed(1);
+            resetManualDie(); redraw();
+        });
+        document.getElementById('bendLength').addEventListener('input', ()=>{
+            let v = parseFloat(document.getElementById('bendLength').value);
+            if(v>4150)v=4150; if(v<10)v=10;
+            document.getElementById('bendLength').value=v;
+            document.getElementById('bendLengthSlider').value=v;
+            redraw();
+        });
+        document.getElementById('bendLengthSlider').addEventListener('input', ()=>{
+            document.getElementById('bendLength').value = document.getElementById('bendLengthSlider').value;
+            redraw();
+        });
+        document.getElementById('material').addEventListener('change', ()=>{ resetManualDie(); redraw(); });
+        document.getElementById('profileType').addEventListener('change', ()=>{ updateLegInputs(); resetViewOnSwitch=true; redraw(); });
+        document.getElementById('resDieSelect').addEventListener('change', (e)=>{ manualDie=parseInt(e.target.value); redraw(); });
+        document.getElementById('btnExportDxf').addEventListener('click', exportToDXF);
+
+        svg.addEventListener('wheel', e => {
+            e.preventDefault();
+            const rect = drawingArea.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            const factor = e.deltaY<0 ? 1.1 : 0.9;
+            const ns = Math.min(3, Math.max(0.4, scale*factor));
+            offsetX = mx - (mx - offsetX)*(ns/scale);
+            offsetY = my - (my - offsetY)*(ns/scale);
+            scale = ns; applyTransform();
+        });
+        drawingArea.addEventListener('mousedown', e => {
+            if(e.button===0){ isPanning=true; panStart={x:e.clientX,y:e.clientY}; panOffsetStart={x:offsetX,y:offsetY}; e.preventDefault(); }
+        });
+        window.addEventListener('mousemove', e => {
+            if(!isPanning)return;
+            offsetX = panOffsetStart.x + (e.clientX - panStart.x);
+            offsetY = panOffsetStart.y + (e.clientY - panStart.y);
+            applyTransform();
+        });
+        window.addEventListener('mouseup', ()=>{ isPanning=false; });
+        document.getElementById('zoomInBtn').addEventListener('click', ()=>{ scale=Math.min(3,scale*1.15); applyTransform(); });
+        document.getElementById('zoomOutBtn').addEventListener('click', ()=>{ scale=Math.max(0.4,scale/1.15); applyTransform(); });
+        document.getElementById('resetViewBtn').addEventListener('click', ()=>{ fitToView(); });
+
+        updateLegInputs();
+        redraw();
+        setTimeout(()=>{ fitToView(); }, 60);
+    })();
+</script>
+</body>
+</html>
