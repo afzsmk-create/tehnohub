@@ -243,7 +243,13 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .bend-item-actions { display: flex; gap: 0.3rem; align-items: center; }
+        .bend-item-actions { display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; }
+        .angle-preset {
+            font-size: 0.65rem !important;
+            padding: 0.15rem 0.4rem !important;
+            min-width: 32px;
+            text-align: center;
+        }
         .dir-btn {
             display: flex; align-items: center; gap: 4px;
             background: rgba(249, 115, 22, 0.2);
@@ -835,6 +841,10 @@
                         <div class="bend-item-header">
                             <span class="bend-item-label">Гиб ${i + 1}</span>
                             <div class="bend-item-actions">
+                                <button type="button" class="preset-btn angle-preset" onclick="setQuickAngle(${i}, 60)">60</button>
+                                <button type="button" class="preset-btn angle-preset" onclick="setQuickAngle(${i}, 90)">90</button>
+                                <button type="button" class="preset-btn angle-preset" onclick="setQuickAngle(${i}, 120)">120</button>
+                                <button type="button" class="preset-btn angle-preset" onclick="setQuickAngle(${i}, 150)">150</button>
                                 <button class="dir-btn ${dirClass}" data-flip-bend="${i}" title="Перевернуть направление (D)">
                                     ${dirArrow} ${dirLabel}
                                 </button>
@@ -848,11 +858,6 @@
                                 <input type="number" id="bendAngle_${i}" value="${b.angle}" step="1" min="60" max="170" style="flex:0 0 85px; text-align:center;">
                                 <input type="range" id="bendAngle_${i}Slider" min="60" max="170" step="1" value="${b.angle}">
                                 <span style="font-size:0.8rem; color:#8b9bb5;">°</span>
-                            </div>
-                            <div style="display: flex; gap: 6px; margin-top: 8px; justify-content: center;">
-                                <button type="button" class="preset-btn" onclick="setQuickAngle(${i}, 90)">90&deg;</button>
-                                <button type="button" class="preset-btn" onclick="setQuickAngle(${i}, 105)">105&deg;</button>
-                                <button type="button" class="preset-btn" onclick="setQuickAngle(${i}, 120)">120&deg;</button>
                             </div>
                         </div>
                     </div>`;
