@@ -370,7 +370,6 @@
         <div class="header">
             <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z" /><line x1="3" y1="3" x2="10" y2="10" stroke-width="1.5" /><line x1="14" y1="3" x2="21" y2="10" /><line x1="3" y1="14" x2="10" y2="21" /><line x1="14" y1="14" x2="21" y2="21" /></svg>
             <h1>Калькулятор гибки</h1>
-
         </div>
         <div class="input-group">
             <div class="label-row">
@@ -455,7 +454,6 @@
         </div>
 
         <div id="bendEditor"></div>
-
         <div id="warningBox" class="warning"></div>
 
         <div class="save-load-section">
@@ -467,7 +465,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 </button>
                 <button class="load-btn" id="loadBtn" title="Загрузить">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2-2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                 </button>
                 <button class="delete-btn" id="deleteBtn" title="Удалить">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2-2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -601,6 +599,14 @@
                     </svg>
                     <span>Сбоку</span>
                 </button>
+                
+                <button class="view-btn-3d" id="viewPunchBtn" title="Показать инструмент (пуансон)">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 3h10v4l-4 8v6h-2v-6l-4-8V3z"/>
+                    </svg>
+                    <span id="punchBtnLabel">Пуансон</span>
+                </button>
+
                 <button class="view-btn-3d" id="viewLabelsBtn" title="Показать подсказки на 3D">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
@@ -624,7 +630,6 @@
 
 <script>
     (function() {
-        // --- ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ БЫСТРЫХ УГЛОВ ---
         window.setQuickAngle = function(idx, angle) {
             bends[idx].angle = angle;
             updateBendEditor();
@@ -641,15 +646,17 @@
         const availableDies = [10, 16, 22, 35, 50];
         let manualDie = null;
 
-        // ---------- ДИНАМИЧЕСКАЯ МОДЕЛЬ ДАННЫХ ----------
         let segments = [{ length: 50 }, { length: 30 }];
         let bends = [{ angle: 90, direction: 1 }];
         let selectedBendIdx = -1;
 
+        let punchMesh = null;
+        let punchState = 0; 
+        let currentPunchLength = 0;
+
         function deepCopySegments() { return segments.map(s => ({ length: s.length })); }
         function deepCopyBends() { return bends.map(b => ({ angle: b.angle, direction: b.direction })); }
 
-        // ---------- ФИЗИЧЕСКИЕ МОДЕЛИ ----------
         function getAirRadius(V, S, matKey) {
             const Rm = materialData[matKey].Rm;
             const baseRi = 0.156 * V * Math.pow(S / (V / 8), -0.2);
@@ -708,7 +715,6 @@
             return bestV;
         }
 
-        // ---------- ВХОДНЫЕ ДАННЫЕ ----------
         function getMaterialKey() { return document.getElementById('material').value; }
         function getThickness() { return Math.min(7, Math.max(0.5, parseFloat(document.getElementById('thickness').value) || 0)); }
         function getBendLength() { return Math.min(4150, Math.max(10, parseFloat(document.getElementById('bendLength').value) || 100)); }
@@ -716,7 +722,6 @@
         function getExternalAngles() { return bends.map(b => b.angle); }
         function getProfileDims() { return { segments: deepCopySegments(), bends: deepCopyBends() }; }
 
-        // ---------- ЯДРО РАСЧЁТА ----------
         function calculateGeometry() {
             const matKey = getMaterialKey();
             const S = getThickness();
@@ -750,7 +755,6 @@
             return Math.max(0, sumExt - totalBD);
         }
 
-        // ---------- ВАЛИДАЦИЯ ----------
         function validate(geom, dims, forceKN, forceTon, forcePerMeter) {
             if (!geom) return [];
             const { S, V, R } = geom;
@@ -806,7 +810,6 @@
             return messages;
         }
 
-        // ---------- РЕДАКТОР ГИБОВ (UI) ----------
         function updateBendEditor() {
             const container = document.getElementById('bendEditor');
             let html = '';
@@ -955,6 +958,7 @@
                     if (e.target.closest('.dir-btn') || e.target.closest('.del-bend-btn') || e.target.closest('input') || e.target.closest('button')) return;
                     selectedBendIdx = parseInt(el.dataset.bendIdx);
                     updateBendEditor();
+                    redraw(); 
                 });
             });
         }
@@ -988,9 +992,8 @@
             redraw();
         }
 
-        // ---------- THREE.JS GLOBALS ----------
         let scene, camera, renderer, controls, sheetGroup;
-        let showLabels = false; // Состояние подсказок на 3D
+        let showLabels = false;
 
         function createTextSprite(text, bgColor) {
             const canvas = document.createElement('canvas');
@@ -1015,6 +1018,103 @@
             sprite.scale.set(16, 4, 1); 
             sprite.renderOrder = 999;
             return sprite;
+        }
+
+        // ГЕНЕРАТОР ГЕОМЕТРИИ ПУАНСОНА С ПОЛУПРОЗРАЧНЫМ МАТЕРИАЛОМ И ВАШИМИ КООРДИНАТАМИ
+        function getPunchMesh(length) {
+            if (punchMesh && currentPunchLength !== length) {
+                punchMesh.geometry.dispose();
+            }
+            
+            if (!punchMesh || currentPunchLength !== length) {
+                const shape = new THREE.Shape();
+                
+                shape.moveTo(0, 0);
+                shape.lineTo(4.069089, 4.440124); 
+                shape.lineTo(-32.224911, 62.522124); 
+                const cx = -15.26378619;
+                const cy = 73.12024823;
+                const r = 20;
+                const startAngle = Math.atan2(62.52212353 - cy, -32.22491093 - cx);
+                const endAngle = Math.atan2(92.14112353 - cy, -21.44491093 - cx);
+                shape.absarc(cx, cy, r, startAngle, endAngle, true); 
+                shape.lineTo(7.00008907, 101.38412353); 
+                shape.lineTo(7.00008907, 114.38412353); 
+                shape.lineTo(6.00008907, 115.38412353); 
+                shape.lineTo(-6.99991093, 115.38412353); 
+                shape.lineTo(-6.99991093, 144.38412353); 
+                shape.lineTo(-7.99991093, 145.38412353); 
+                shape.lineTo(-18.99991093, 145.38412353); 
+                shape.lineTo(-19.99991093, 144.38412353); 
+                shape.lineTo(-19.99991093, 115.184124); 
+                shape.lineTo(-49.999911, 115.184124); 
+                shape.lineTo(-59.999911, 105.184124); 
+                shape.lineTo(-59.999911, 66.588124); 
+                shape.lineTo(-4.985911, 6.550124); 
+                shape.lineTo(-4.985911, 5.440124); 
+                shape.lineTo(0, 0);
+
+                const extrudeSettings = { depth: length, bevelEnabled: false };
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                
+                geometry.translate(0, 0, -length / 2);
+
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: 0x4f627a, 
+                    metalness: 0.7, 
+                    roughness: 0.3,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.7
+                });
+
+                if (!punchMesh) {
+                    punchMesh = new THREE.Mesh(geometry, material);
+                } else {
+                    punchMesh.geometry = geometry;
+                }
+                
+                currentPunchLength = length;
+            }
+            return punchMesh;
+        }
+
+        function updatePunch() {
+            if (punchState === 0 || selectedBendIdx < 0) {
+                if (punchMesh && punchMesh.parent) {
+                    punchMesh.parent.remove(punchMesh);
+                }
+                return;
+            }
+
+            let targetAnchor = null;
+            if (sheetGroup) {
+                sheetGroup.traverse(child => {
+                    if (child.userData && child.userData.isPunchAnchor && child.userData.bendIdx === selectedBendIdx) {
+                        targetAnchor = child;
+                    }
+                });
+            }
+
+            if (targetAnchor) {
+                const L = getBendLength();
+                const mesh = getPunchMesh(L);
+                
+                targetAnchor.add(mesh);
+                
+                mesh.position.set(0, 0, 0);
+                mesh.rotation.set(0, 0, 0);
+                
+                const dir = targetAnchor.userData.dir;
+                
+                if (dir < 0) {
+                    mesh.rotation.z = Math.PI;
+                }
+
+                if (punchState === 2) {
+                    mesh.rotation.y = Math.PI;
+                }
+            }
         }
 
         function init3D() {
@@ -1147,7 +1247,6 @@
                     if (i === anchorIdx) mesh.userData.isAnchor = true;
                     currentParent.add(mesh);
 
-                    // --- ДОБАВЛЕНИЕ МЕТКИ ПОЛКИ ---
                     if (showLabels) {
                         const flangeLabel = createTextSprite(`Полка ${i+1}`, 'rgba(59, 130, 246, 0.9)');
                         flangeLabel.position.set(netLen/2, S/2 + 6, 0);
@@ -1161,6 +1260,13 @@
                     const dir = b.direction;
                     const bendAngleRad = bg.bendAngleDeg * Math.PI / 180;
                     
+                    const punchAnchor = new THREE.Group();
+                    const tanVal = Math.tan(bendAngleRad / 2);
+                    punchAnchor.position.set(netLen + Ri * tanVal, dir * S/2, 0);
+                    punchAnchor.rotation.z = dir * bendAngleRad / 2;
+                    punchAnchor.userData = { isPunchAnchor: true, bendIdx: i, dir: dir };
+                    currentParent.add(punchAnchor);
+
                     const bendShape = new THREE.Shape();
                     if (dir > 0) {
                         bendShape.absarc(0, Ri + S/2, Ri + S, -Math.PI/2, -Math.PI/2 + bendAngleRad, false);
@@ -1181,7 +1287,6 @@
                     bMesh.position.set(netLen, 0, 0);
                     currentParent.add(bMesh);
 
-                    // --- ДОБАВЛЕНИЕ МЕТКИ ГИБА ---
                     if (showLabels) {
                         const bendLabel = createTextSprite(`Гиб ${i+1}`, 'rgba(245, 158, 11, 0.9)');
                         const yOffset = dir > 0 ? (Ri + S) + 6 : -(Ri + S) - 6;
@@ -1200,6 +1305,7 @@
                     shiftBack.position.set(0, -pivotY, 0);
                     nextParent.add(shiftBack);
                     
+                    nextParent.add(shiftBack);
                     currentParent.add(nextParent);
                     currentParent = shiftBack;
                 }
@@ -1237,7 +1343,6 @@
             sheetGroup.updateMatrixWorld(true);
         }
 
-        // ---------- ВИЗУАЛИЗАЦИЯ (2D / 3D) ----------
         let scale = 1, offsetX = 0, offsetY = 0, isPanning = false, panStart = {x:0,y:0}, panOffsetStart = {x:0,y:0};
         let currentView = 'bent';
         let firstDrawDone = false;
@@ -1382,6 +1487,7 @@
             svg.style.display = 'none';
             document.getElementById('webglCanvas').style.display = 'block';
             build3DSheet(geom, dims);
+            updatePunch();
         }
 
         function updateExplanation(geom, dims, totalLen) {
@@ -1713,105 +1819,101 @@
             let dTheta = endSpherical.theta - startSpherical.theta;
             while (dTheta > Math.PI) { endSpherical.theta -= 2 * Math.PI; dTheta = endSpherical.theta - startSpherical.theta; }
             while (dTheta < -Math.PI) { endSpherical.theta += 2 * Math.PI; dTheta = endSpherical.theta - startSpherical.theta; }
-
-            const duration = 700; 
+            
             const startTime = performance.now();
-
-            function update() {
-                const now = performance.now();
-                const progress = Math.min((now - startTime) / duration, 1);
-                const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress; 
-
-                controls.target.lerpVectors(startTarget, targetTarget, ease);
+            const duration = 400; 
+            
+            function animateView(time) {
+                const elapsed = time - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = progress * (2 - progress);
                 
-                const r = startSpherical.radius + (endSpherical.radius - startSpherical.radius) * ease;
-                const phi = startSpherical.phi + (endSpherical.phi - startSpherical.phi) * ease;
                 const theta = startSpherical.theta + (endSpherical.theta - startSpherical.theta) * ease;
+                const phi = startSpherical.phi + (endSpherical.phi - startSpherical.phi) * ease;
+                const radius = startSpherical.radius + (endSpherical.radius - startSpherical.radius) * ease;
                 
-                const currentSpherical = new THREE.Spherical(r, phi, theta);
-                const offset = new THREE.Vector3().setFromSpherical(currentSpherical);
-                
-                camera.position.copy(controls.target).add(offset);
+                const currentSpherical = new THREE.Spherical(radius, phi, theta);
+                camera.position.setFromSpherical(currentSpherical).add(targetTarget);
+                controls.target.lerpVectors(startTarget, targetTarget, ease);
                 controls.update();
-
-                if (progress < 1) { animId = requestAnimationFrame(update); }
-            }
-            animId = requestAnimationFrame(update);
-        }
-
-        function setupViewButtons() {
-            const btnTop = document.getElementById('viewTop');
-            const btnSide = document.getElementById('viewSide');
-            const btnReset = document.getElementById('viewReset');
-            const btnHelp = document.getElementById('viewHelp');
-            const btnLabels = document.getElementById('viewLabelsBtn');
-            const helpOverlay = document.getElementById('helpOverlay');
-            const closeHelpBtn = document.getElementById('closeHelpBtn');
-            
-            if (btnReset) btnReset.addEventListener('click', function() {
-                if (currentView === 'flat') {
-                    fitToView();
-                } else {
-                    setActiveView('viewReset');
-                    const s = getPartScale();
-                    animateCamera(new THREE.Vector3(s*1.2, s*0.8, s*1.2), new THREE.Vector3(0, s*0.3, 0));
+                
+                if (progress < 1) {
+                    animId = requestAnimationFrame(animateView);
                 }
-            });
-            
-            if (btnTop) btnTop.addEventListener('click', function() {
-                setActiveView('viewTop');
-                const s = getPartScale();
-                animateCamera(new THREE.Vector3(0, s*2.5, s*0.001), new THREE.Vector3(0, 0, 0));
-            });
-            
-            if (btnSide) btnSide.addEventListener('click', function() {
-                setActiveView('viewSide');
-                const s = getPartScale();
-                animateCamera(new THREE.Vector3(s*1.8, s*0.4, 0), new THREE.Vector3(0, s*0.3, 0));
-            });
-
-            if (btnLabels) btnLabels.addEventListener('click', function() {
-                showLabels = !showLabels;
-                btnLabels.classList.toggle('active', showLabels);
-                redraw();
-            });
-
-            if (btnHelp) btnHelp.addEventListener('click', function() {
-                helpOverlay.classList.toggle('show');
-                btnHelp.classList.toggle('active');
-            });
-            
-            if (closeHelpBtn) closeHelpBtn.addEventListener('click', function() {
-                helpOverlay.classList.remove('show');
-                btnHelp.classList.remove('active');
-            });
-        }
-        
-        function setActiveView(id) {
-            document.querySelectorAll('.view-btn-3d:not(.help-btn):not(#viewLabelsBtn)').forEach(function(b) { b.classList.remove('active'); });
-            var el = document.getElementById(id);
-            if (el) el.classList.add('active');
-        }
-        
-        function getPartScale() {
-            if (!sheetGroup) return 100;
-            try {
-                var bbox = new THREE.Box3().setFromObject(sheetGroup);
-                var size = new THREE.Vector3();
-                bbox.getSize(size);
-                return Math.max(size.x, size.y, size.z, 100);
-            } catch(e) { return 100; }
+            }
+            animId = requestAnimationFrame(animateView);
         }
 
-        updateBendEditor();
+        // Обработчики для кнопок управления 3D-видом
+        document.getElementById('viewReset').addEventListener('click', () => {
+            if (!sheetGroup) return;
+            const bbox = new THREE.Box3().setFromObject(sheetGroup);
+            const size = bbox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z, 50);
+            animateCamera(new THREE.Vector3(maxDim * 1.2, maxDim * 0.8, maxDim * 1.2), new THREE.Vector3(0, size.y / 2, 0));
+            document.querySelectorAll('.view-controls .view-btn-3d').forEach(b => b.classList.remove('active'));
+            document.getElementById('viewReset').classList.add('active');
+        });
+
+        document.getElementById('viewTop').addEventListener('click', () => {
+            if (!sheetGroup) return;
+            const bbox = new THREE.Box3().setFromObject(sheetGroup);
+            const size = bbox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z, 50);
+            animateCamera(new THREE.Vector3(0, maxDim * 1.5, 0), new THREE.Vector3(0, size.y / 2, 0));
+            document.querySelectorAll('.view-controls .view-btn-3d').forEach(b => b.classList.remove('active'));
+            document.getElementById('viewTop').classList.add('active');
+        });
+
+        document.getElementById('viewSide').addEventListener('click', () => {
+            if (!sheetGroup) return;
+            const bbox = new THREE.Box3().setFromObject(sheetGroup);
+            const size = bbox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z, 50);
+            animateCamera(new THREE.Vector3(0, size.y / 2, maxDim * 1.5), new THREE.Vector3(0, size.y / 2, 0));
+            document.querySelectorAll('.view-controls .view-btn-3d').forEach(b => b.classList.remove('active'));
+            document.getElementById('viewSide').classList.add('active');
+        });
+
+        document.getElementById('viewPunchBtn').addEventListener('click', () => {
+            punchState = (punchState + 1) % 3;
+            const label = document.getElementById('punchBtnLabel');
+            const btn = document.getElementById('viewPunchBtn');
+            if (punchState === 0) {
+                label.textContent = 'Пуансон';
+                btn.classList.remove('active');
+            } else if (punchState === 1) {
+                label.textContent = 'Прямой';
+                btn.classList.add('active');
+            } else {
+                label.textContent = 'Развернут';
+                btn.classList.add('active');
+            }
+            updatePunch();
+        });
+
+        document.getElementById('viewLabelsBtn').addEventListener('click', () => {
+            showLabels = !showLabels;
+            const btn = document.getElementById('viewLabelsBtn');
+            if (showLabels) btn.classList.add('active');
+            else btn.classList.remove('active');
+            redraw();
+        });
+
+        document.getElementById('viewHelp').addEventListener('click', () => {
+            const overlay = document.getElementById('helpOverlay');
+            overlay.classList.toggle('show');
+            document.getElementById('viewHelp').classList.toggle('active');
+        });
+
+        document.getElementById('closeHelpBtn').addEventListener('click', () => {
+            document.getElementById('helpOverlay').classList.remove('show');
+            document.getElementById('viewHelp').classList.remove('active');
+        });
+
         refreshProfilesList();
-        setupViewButtons();
+        updateBendEditor();
         redraw();
-        
-        setTimeout(() => { 
-            if (currentView === 'flat') fitToView(); 
-            else document.getElementById('viewReset').click(); 
-        }, 60);
     })();
 </script>
 </body>
