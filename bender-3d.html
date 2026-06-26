@@ -198,13 +198,13 @@
         }
         .close-help:hover { background: rgba(255,255,255,0.15); color: #fff; }
 
-        .dim-text { font-family: 'Inter', sans-serif; font-size: 13px; fill: #d5e0f0; font-weight: 500; }
+        .dim-text { font-family: 'Inter', sans-serif; font-size: 15px; fill: #d5e0f0; font-weight: 600; }
         .bend-line { stroke: #f97316; stroke-width: 2; stroke-dasharray: 5 3; }
         .dim-line { stroke: #64748b; stroke-width: 1.2; }
         .flat-body { fill: #1e3b5c; stroke: #5c7b9c; stroke-width: 1.5; }
         .bend-zone { fill: #f97316; opacity: 0.25; cursor: pointer; }
         .bend-zone:hover { opacity: 0.45; }
-        .bend-zone-text { fill: #ffffff; font-size: 10px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+        .bend-zone-text { fill: #ffffff; font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
         .fix-link { text-decoration: underline; cursor: pointer; color: #60a5fa; font-weight: 700; }
         
         .inner-indicator { 
@@ -1434,7 +1434,7 @@
                 txt.setAttribute('class','dim-text'); txt.textContent = label; dg.appendChild(txt); g.appendChild(dg);
             }
 
-            function drawBend(xStart, w, baVal, bendIdx) {
+            function drawBend(xStart, w, baVal, bendIdx, angleLabel) {
                 const zone = document.createElementNS('http://www.w3.org/2000/svg','rect');
                 zone.setAttribute('x',xStart); zone.setAttribute('y',baseY-stripH); zone.setAttribute('width',w); zone.setAttribute('height',stripH);
                 zone.setAttribute('class','bend-zone');
@@ -1452,7 +1452,9 @@
                 });
                 const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
                 txt.setAttribute('x',xStart+w/2); txt.setAttribute('y',baseY-stripH/2);
-                txt.setAttribute('class','bend-zone-text'); txt.textContent = `BA ${baVal.toFixed(2)}`; g.appendChild(txt);
+                txt.setAttribute('class','bend-zone-text'); 
+                txt.textContent = angleLabel || `BA ${baVal.toFixed(1)}`;
+                g.appendChild(txt);
             }
 
             const segs = [];
@@ -1466,15 +1468,27 @@
                 if (i < bendGeom.length) leftOSSB = bendGeom[i].OSSB;
                 if (i > 0 && i - 1 < bendGeom.length) rightOSSB = bendGeom[i - 1].OSSB;
                 const netLen = segLenVal - leftOSSB - rightOSSB;
-                segs.push({ t: 's', w: Math.max(0, netLen) * drawScale, lbl: `${segLenVal.toFixed(1)}` });
+                
+                // Метка: нетто + угол следующего гиба или длина сегмента
+                let segLabel = netLen.toFixed(1);
                 if (i < bends.length) {
-                    segs.push({ t: 'b', w: bendGeom[i].BA * drawScale, ba: bendGeom[i].BA, idx: i });
+                    segLabel += ' ▸' + bends[i].angle + '°';
+                } else if (i > 0 && bends[i-1]) {
+                    segLabel += ' ◂' + bends[i-1].angle + '°';
+                } else {
+                    segLabel += ' L=' + segLenVal.toFixed(0);
+                }
+                
+                segs.push({ t: 's', w: Math.max(0, netLen) * drawScale, lbl: segLabel });
+                if (i < bends.length) {
+                    const angleLabel = bends[i].angle + '° ' + (bends[i].direction > 0 ? '↑' : '↓');
+                    segs.push({ t: 'b', w: bendGeom[i].BA * drawScale, ba: bendGeom[i].BA, idx: i, angleLabel: angleLabel });
                 }
             }
 
             let xPos = startX;
             segs.forEach(s => {
-                if (s.t === 'b') drawBend(xPos, s.w, s.ba, s.idx);
+                if (s.t === 'b') drawBend(xPos, s.w, s.ba, s.idx, s.angleLabel);
                 else if (s.w > 0.1) addDim(xPos, xPos + s.w, baseY, s.lbl, true);
                 xPos += s.w;
             });
@@ -1533,7 +1547,7 @@
                 if (i < bendGeom.length) leftOSSB = bendGeom[i].OSSB;
                 if (i > 0 && i - 1 < bendGeom.length) rightOSSB = bendGeom[i - 1].OSSB;
                 const inner = dims.segments[i].length - leftOSSB - rightOSSB;
-                el.textContent = `внутр. ${inner.toFixed(1)}`;
+                el.textContent = `Плоск. ${inner.toFixed(1)}`;
                 el.style.display = 'inline-block';
             }
         }
