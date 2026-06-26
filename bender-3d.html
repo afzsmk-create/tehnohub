@@ -996,28 +996,42 @@
         let showLabels = false;
 
         function createTextSprite(text, bgColor) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = bgColor;
-            ctx.beginPath();
-            ctx.roundRect(0, 0, 512, 128, 64);
-            ctx.fill();
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 64px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, 256, 68);
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false });
-            const sprite = new THREE.Sprite(spriteMaterial);
-            
-            sprite.scale.set(16, 4, 1); 
-            sprite.renderOrder = 999;
-            return sprite;
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512; canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = bgColor;
+                ctx.beginPath();
+                const r = 64;
+                ctx.moveTo(r, 0);
+                ctx.lineTo(512-r, 0);
+                ctx.quadraticCurveTo(512, 0, 512, r);
+                ctx.lineTo(512, 128-r);
+                ctx.quadraticCurveTo(512, 128, 512-r, 128);
+                ctx.lineTo(r, 128);
+                ctx.quadraticCurveTo(0, 128, 0, 128-r);
+                ctx.lineTo(0, r);
+                ctx.quadraticCurveTo(0, 0, r, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 64px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 256, 68);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                
+                sprite.scale.set(16, 4, 1); 
+                sprite.renderOrder = 999;
+                return sprite;
+            } catch(e) {
+                return null;
+            }
         }
 
         // ГЕНЕРАТОР ГЕОМЕТРИИ ПУАНСОНА С ПОЛУПРОЗРАЧНЫМ МАТЕРИАЛОМ И ВАШИМИ КООРДИНАТАМИ
@@ -1249,8 +1263,10 @@
 
                     if (showLabels) {
                         const flangeLabel = createTextSprite(`Полка ${i+1}`, 'rgba(59, 130, 246, 0.9)');
-                        flangeLabel.position.set(netLen/2, S/2 + 6, 0);
-                        currentParent.add(flangeLabel);
+                        if (flangeLabel) {
+                            flangeLabel.position.set(netLen/2, S/2 + 6, 0);
+                            currentParent.add(flangeLabel);
+                        }
                     }
                 }
 
@@ -1289,9 +1305,11 @@
 
                     if (showLabels) {
                         const bendLabel = createTextSprite(`Гиб ${i+1}`, 'rgba(245, 158, 11, 0.9)');
-                        const yOffset = dir > 0 ? (Ri + S) + 6 : -(Ri + S) - 6;
-                        bendLabel.position.set(netLen, yOffset, 0);
-                        currentParent.add(bendLabel);
+                        if (bendLabel) {
+                            const yOffset = dir > 0 ? (Ri + S) + 6 : -(Ri + S) - 6;
+                            bendLabel.position.set(netLen, yOffset, 0);
+                            currentParent.add(bendLabel);
+                        }
                     }
                     
                     const nextParent = new THREE.Group();
@@ -1434,7 +1452,7 @@
                 txt.setAttribute('class','dim-text'); txt.textContent = label; dg.appendChild(txt); g.appendChild(dg);
             }
 
-            function drawBend(xStart, w, baVal, bendIdx, angleLabel) {
+            function drawBend(xStart, w, baVal, bendIdx) {
                 const zone = document.createElementNS('http://www.w3.org/2000/svg','rect');
                 zone.setAttribute('x',xStart); zone.setAttribute('y',baseY-stripH); zone.setAttribute('width',w); zone.setAttribute('height',stripH);
                 zone.setAttribute('class','bend-zone');
@@ -1452,9 +1470,7 @@
                 });
                 const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
                 txt.setAttribute('x',xStart+w/2); txt.setAttribute('y',baseY-stripH/2);
-                txt.setAttribute('class','bend-zone-text'); 
-                txt.textContent = angleLabel || `BA ${baVal.toFixed(1)}`;
-                g.appendChild(txt);
+                txt.setAttribute('class','bend-zone-text'); txt.textContent = `BA ${baVal.toFixed(1)}`; g.appendChild(txt);
             }
 
             const segs = [];
@@ -1473,14 +1489,13 @@
                 
                 segs.push({ t: 's', w: Math.max(0, netLen) * drawScale, lbl: segLabel });
                 if (i < bends.length) {
-                    const angleLabel = bends[i].angle + '° ' + (bends[i].direction > 0 ? '↑' : '↓');
-                    segs.push({ t: 'b', w: bendGeom[i].BA * drawScale, ba: bendGeom[i].BA, idx: i, angleLabel: angleLabel });
+                    segs.push({ t: 'b', w: bendGeom[i].BA * drawScale, ba: bendGeom[i].BA, idx: i });
                 }
             }
 
             let xPos = startX;
             segs.forEach(s => {
-                if (s.t === 'b') drawBend(xPos, s.w, s.ba, s.idx, s.angleLabel);
+                if (s.t === 'b') drawBend(xPos, s.w, s.ba, s.idx);
                 else if (s.w > 0.1) addDim(xPos, xPos + s.w, baseY, s.lbl, true);
                 xPos += s.w;
             });
