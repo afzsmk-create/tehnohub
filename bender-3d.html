@@ -997,7 +997,7 @@
 
         function createTextSprite(text, bgColor) {
             const canvas = document.createElement('canvas');
-            canvas.width = 640; canvas.height = 160;
+            canvas.width = 512; canvas.height = 128;
             const ctx = canvas.getContext('2d');
             
             ctx.fillStyle = bgColor;
@@ -1006,16 +1006,16 @@
             ctx.fill();
             
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 80px Inter, sans-serif';
+            ctx.font = 'bold 64px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(text, 320, 85);
+            ctx.fillText(text, 256, 68);
             
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false });
             const sprite = new THREE.Sprite(spriteMaterial);
             
-            sprite.scale.set(20, 5, 1); 
+            sprite.scale.set(16, 4, 1); 
             sprite.renderOrder = 999;
             return sprite;
         }
@@ -1248,7 +1248,7 @@
                     currentParent.add(mesh);
 
                     if (showLabels) {
-                        const flangeLabel = createTextSprite(`L${i+1}=${segLenVal.toFixed(0)}`, 'rgba(59, 130, 246, 0.9)');
+                        const flangeLabel = createTextSprite(`Полка ${i+1}`, 'rgba(59, 130, 246, 0.9)');
                         flangeLabel.position.set(netLen/2, S/2 + 6, 0);
                         currentParent.add(flangeLabel);
                     }
@@ -1288,7 +1288,7 @@
                     currentParent.add(bMesh);
 
                     if (showLabels) {
-                        const bendLabel = createTextSprite(`${bg.bendAngleDeg.toFixed(0)}° ${dir>0?'↑':'↓'}`, 'rgba(245, 158, 11, 0.9)');
+                        const bendLabel = createTextSprite(`Гиб ${i+1}`, 'rgba(245, 158, 11, 0.9)');
                         const yOffset = dir > 0 ? (Ri + S) + 6 : -(Ri + S) - 6;
                         bendLabel.position.set(netLen, yOffset, 0);
                         currentParent.add(bendLabel);
