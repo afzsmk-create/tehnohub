@@ -1017,16 +1017,16 @@
                 ctx.fill();
                 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 80px Inter, sans-serif';
+                ctx.font = 'bold 64px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(text, 256, 72);
+                ctx.fillText(text, 256, 68);
                 
                 const texture = new THREE.CanvasTexture(canvas);
                 const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false });
                 const sprite = new THREE.Sprite(spriteMaterial);
                 
-                sprite.scale.set(24, 6, 1); 
+                sprite.scale.set(16, 4, 1); 
                 sprite.renderOrder = 999;
                 return sprite;
             } catch(e) {
@@ -1470,16 +1470,7 @@
                 });
                 const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
                 txt.setAttribute('x',xStart+w/2); txt.setAttribute('y',baseY-stripH/2);
-                const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-                txt.setAttribute('x',xStart+w/2); txt.setAttribute('y',baseY-stripH/2-6);
-                txt.setAttribute('class','bend-zone-text'); txt.textContent = `BA ${baVal.toFixed(1)}`;
-                g.appendChild(txt);
-                const txt2 = document.createElementNS('http://www.w3.org/2000/svg','text');
-                txt2.setAttribute('x',xStart+w/2); txt2.setAttribute('y',baseY-stripH/2+8);
-                txt2.setAttribute('class','bend-zone-text'); txt2.style.fontSize = '9px'; txt2.style.opacity = '0.7';
-                const bAngle = bends[bendIdx];
-                txt2.textContent = bAngle ? bAngle.angle + '° ' + (bAngle.direction > 0 ? '↑' : '↓') : '';
-                g.appendChild(txt2);
+                txt.setAttribute('class','bend-zone-text'); txt.textContent = `BA ${baVal.toFixed(1)}`; g.appendChild(txt);
             }
 
             const segs = [];
