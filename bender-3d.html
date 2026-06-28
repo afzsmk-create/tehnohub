@@ -1066,11 +1066,12 @@
                 shape.lineTo(-59.999911, 66.588124); 
                 shape.lineTo(-4.985911, 6.550124); 
                 shape.lineTo(-4.985911, 5.440124); 
-                const noseCx = 0.0;
-                const noseCy = 1.18402631;
+                shape.lineTo(-0.589911, 0.643651);
+                const noseCx = 0;
+                const noseCy = 0;
                 const noseR = 0.8;
-                const noseStartAngle = Math.atan2(5.440124 - noseCy, -4.985911 - noseCx);
-                const noseEndAngle = Math.atan2(0.643651 - noseCy, -0.589911 - noseCx);
+                const noseStartAngle = Math.atan2(0.643651 - noseCy, -0.589911 - noseCx);
+                const noseEndAngle = Math.atan2(0.643651 - noseCy, 0.589911 - noseCx);
                 shape.absarc(noseCx, noseCy, noseR, noseStartAngle, noseEndAngle, false);
 
                 const extrudeSettings = { depth: length, bevelEnabled: false };
