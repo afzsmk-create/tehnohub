@@ -1043,7 +1043,7 @@
             if (!punchMesh || currentPunchLength !== length) {
                 const shape = new THREE.Shape();
                 
-                shape.moveTo(0.589911, 0.643651);
+                shape.moveTo(0, 0);
                 shape.lineTo(4.069089, 4.440124); 
                 shape.lineTo(-32.224911, 62.522124); 
                 const cx = -15.26378619;
@@ -1066,13 +1066,7 @@
                 shape.lineTo(-59.999911, 66.588124); 
                 shape.lineTo(-4.985911, 6.550124); 
                 shape.lineTo(-4.985911, 5.440124); 
-                shape.lineTo(-0.589911, 0.643651);
-                const noseCx = 0;
-                const noseCy = 1.18402631;
-                const noseR = 0.8;
-                const noseStartAngle = Math.atan2(0.643651 - noseCy, -0.589911 - noseCx);
-                const noseEndAngle = Math.atan2(0.643651 - noseCy, 0.589911 - noseCx);
-                shape.absarc(noseCx, noseCy, noseR, noseStartAngle, noseEndAngle, false);
+                shape.lineTo(0, 0);
 
                 const extrudeSettings = { depth: length, bevelEnabled: false };
                 const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
